@@ -1,0 +1,120 @@
+<sw-page class="fib-outbox-event-list">
+    <template #smart-bar-header>
+        <h2>{{ $tc('fib-outbox-bridge.list.title') }}</h2>
+    </template>
+
+    <template #smart-bar-actions>
+        <sw-button
+            variant="ghost"
+            @click="runResetStuck"
+            :is-loading="actionLoading.resetStuck"
+            :disabled="isAnyActionLoading()"
+        >
+            {{ $tc('fib-outbox-bridge.list.actions.resetStuck') }}
+        </sw-button>
+        <sw-button
+            variant="ghost"
+            @click="runRequeueDead"
+            :is-loading="actionLoading.requeueDead"
+            :disabled="isAnyActionLoading()"
+        >
+            {{ $tc('fib-outbox-bridge.list.actions.requeueDead') }}
+        </sw-button>
+        <sw-button
+            variant="primary"
+            @click="runDispatchBatch"
+            :is-loading="actionLoading.dispatch"
+            :disabled="isAnyActionLoading()"
+        >
+            {{ $tc('fib-outbox-bridge.list.actions.dispatchBatch') }}
+        </sw-button>
+        <sw-button variant="ghost" @click="clearFilters">
+            {{ $tc('fib-outbox-bridge.list.actions.clearFilters') }}
+        </sw-button>
+        <sw-button variant="primary" @click="refreshAll" :is-loading="isLoading">
+            {{ $tc('fib-outbox-bridge.list.actions.refresh') }}
+        </sw-button>
+    </template>
+
+    <template #content>
+        <sw-card-view>
+            <sw-card :title="$tc('fib-outbox-bridge.list.summary.title')">
+                <div class="sw-grid sw-grid--gap">
+                    <div><strong>{{ $tc('fib-outbox-bridge.list.summary.pending') }}:</strong> {{ summary.pending }}</div>
+                    <div><strong>{{ $tc('fib-outbox-bridge.list.summary.processing') }}:</strong> {{ summary.processing }}</div>
+                    <div><strong>{{ $tc('fib-outbox-bridge.list.summary.published') }}:</strong> {{ summary.published }}</div>
+                    <div><strong>{{ $tc('fib-outbox-bridge.list.summary.dead') }}:</strong> {{ summary.dead }}</div>
+                    <div><strong>{{ $tc('fib-outbox-bridge.list.summary.lag') }}:</strong> {{ lagLabel() }}</div>
+                </div>
+            </sw-card>
+
+            <sw-card :title="$tc('fib-outbox-bridge.list.filters.title')">
+                <sw-container columns="1fr 220px auto" gap="16px">
+                    <sw-text-field
+                        v-model:value="searchTerm"
+                        :label="$tc('fib-outbox-bridge.list.filters.search')"
+                        @change="onSearchTermChange"
+                    />
+
+                    <sw-single-select
+                        :value="statusFilter"
+                        :options="statusOptions"
+                        label-property="label"
+                        value-property="value"
+                        @update:value="onStatusFilterChange"
+                    />
+
+                    <sw-button @click="refreshAll" :is-loading="isLoading" :disabled="isAnyActionLoading()">
+                        {{ $tc('fib-outbox-bridge.list.actions.refresh') }}
+                    </sw-button>
+                </sw-container>
+            </sw-card>
+
+            <sw-data-grid
+                :data-source="items"
+                :columns="columns"
+                :is-loading="isLoading"
+                :allow-inline-edit="false"
+                :show-actions="false"
+                :sort-by="sortBy"
+                :sort-direction="sortDirection"
+                @sort="onSortColumn"
+            >
+                <template #column-status="{ item }">
+                    <sw-label appearance="pill" :variant="statusVariant(item.status)">
+                        {{ item.status }}
+                    </sw-label>
+                </template>
+
+                <template #column-occurredAt="{ item }">
+                    {{ formatDate(item.occurredAt) }}
+                </template>
+
+                <template #column-availableAt="{ item }">
+                    {{ formatDate(item.availableAt) }}
+                </template>
+
+                <template #column-publishedAt="{ item }">
+                    {{ formatDate(item.publishedAt) }}
+                </template>
+
+                <template #column-lockOwner="{ item }">
+                    {{ shortText(item.lockOwner, 48) }}
+                </template>
+
+                <template #column-lastError="{ item }">
+                    {{ shortText(item.lastError, 140) }}
+                </template>
+            </sw-data-grid>
+
+            <sw-pagination
+                v-if="total > limit"
+                :total="total"
+                :limit="limit"
+                :page="page"
+                @page-change="onPageChange"
+                @limit-change="onLimitChange"
+            />
+        </sw-card-view>
+    </template>
+</sw-page>

@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
+    <card>
+        <title>Outbox Bridge</title>
+        <input-field type="single-select">
+            <name>publisherMode</name>
+            <label>Publisher-Modus</label>
+            <defaultValue>messenger</defaultValue>
+            <options>
+                <option>
+                    <id>messenger</id>
+                    <name>Messenger (z.B. AMQP/RabbitMQ via Symfony routing)</name>
+                </option>
+                <option>
+                    <id>webhook</id>
+                    <name>HTTP Webhook</name>
+                </option>
+                <option>
+                    <id>null</id>
+                    <name>Null (nur Logging / Entwicklung)</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="text">
+            <name>webhookUrl</name>
+            <label>Webhook URL</label>
+            <placeholder>https://example.tld/outbox/events</placeholder>
+        </input-field>
+        <input-field type="int">
+            <name>dispatchBatchSize</name>
+            <label>Dispatch Batch Size</label>
+            <required>true</required>
+            <defaultValue>100</defaultValue>
+        </input-field>
+        <input-field type="int">
+            <name>maxAttempts</name>
+            <label>Max. Retry Attempts</label>
+            <required>true</required>
+            <defaultValue>10</defaultValue>
+        </input-field>
+        <input-field type="int">
+            <name>lockSeconds</name>
+            <label>Worker Lock Sekunden</label>
+            <required>true</required>
+            <defaultValue>30</defaultValue>
+        </input-field>
+    </card>
+</config>

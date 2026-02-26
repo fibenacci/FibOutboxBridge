@@ -1,0 +1,63 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <defaults autowire="true" autoconfigure="true" public="false"/>
+
+        <service id="Fib\OutboxBridge\Core\Content\OutboxEvent\OutboxEventDefinition">
+            <tag name="shopware.entity.definition"/>
+        </service>
+
+        <service id="Fib\OutboxBridge\Core\Outbox\Publisher\MessengerEventPublisher"/>
+        <service id="Fib\OutboxBridge\Core\Outbox\Publisher\WebhookEventPublisher"/>
+        <service id="Fib\OutboxBridge\Core\Outbox\Publisher\NullEventPublisher"/>
+        <service id="Fib\OutboxBridge\Core\Outbox\Publisher\ConfigurableEventPublisher"/>
+
+        <service id="Fib\OutboxBridge\Core\Outbox\Publisher\EventPublisherInterface"
+                 alias="Fib\OutboxBridge\Core\Outbox\Publisher\ConfigurableEventPublisher"
+        />
+
+        <service id="Fib\OutboxBridge\Core\Outbox\Repository\OutboxRepository"/>
+        <service id="Fib\OutboxBridge\Core\Outbox\Config\OutboxSettings"/>
+        <service id="Fib\OutboxBridge\Core\Outbox\Service\OutboxEventBus"/>
+        <service id="Fib\OutboxBridge\Core\Outbox\Service\OutboxDispatcher"/>
+
+        <service id="Fib\OutboxBridge\Command\OutboxDispatchCommand">
+            <tag name="console.command"/>
+        </service>
+
+        <service id="Fib\OutboxBridge\Command\OutboxResetStuckCommand">
+            <tag name="console.command"/>
+        </service>
+
+        <service id="Fib\OutboxBridge\Command\OutboxStatsCommand">
+            <tag name="console.command"/>
+        </service>
+
+        <service id="Fib\OutboxBridge\Command\OutboxEnqueueTestCommand">
+            <tag name="console.command"/>
+        </service>
+
+        <service id="Fib\OutboxBridge\Subscriber\ProductStockOutboxSubscriber">
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Fib\OutboxBridge\ScheduledTask\DispatchOutboxTask">
+            <tag name="shopware.scheduled.task"/>
+        </service>
+
+        <service id="Fib\OutboxBridge\ScheduledTask\DispatchOutboxTaskHandler">
+            <tag name="messenger.message_handler"/>
+            <argument type="service" id="scheduled_task.repository"/>
+            <argument type="service" id="logger"/>
+        </service>
+
+        <service id="Fib\OutboxBridge\Controller\Api\OutboxActionController" public="true">
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+    </services>
+</container>

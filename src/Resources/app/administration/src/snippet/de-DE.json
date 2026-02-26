@@ -1,0 +1,54 @@
+{
+  "fib-outbox-bridge": {
+    "module": {
+      "title": "Outbox Bridge",
+      "description": "Transaktionale Outbox Queue überwachen",
+      "navigation": "Outbox Bridge"
+    },
+    "list": {
+      "title": "Outbox Events",
+      "actions": {
+        "dispatchBatch": "Batch dispatchen",
+        "resetStuck": "Stuck zurücksetzen",
+        "requeueDead": "Dead replayen",
+        "refresh": "Aktualisieren",
+        "clearFilters": "Filter zurücksetzen"
+      },
+      "filters": {
+        "title": "Filter",
+        "search": "Suche",
+        "allStatuses": "Alle Status"
+      },
+      "summary": {
+        "title": "Queue Übersicht",
+        "pending": "Pending",
+        "processing": "Processing",
+        "published": "Published",
+        "dead": "Dead",
+        "lag": "Älteste Pending-Verzögerung"
+      },
+      "columns": {
+        "status": "Status",
+        "eventName": "Event",
+        "aggregateType": "Aggregattyp",
+        "aggregateId": "Aggregat-ID",
+        "attempts": "Versuche",
+        "occurredAt": "Occurred At",
+        "availableAt": "Available At",
+        "publishedAt": "Published At",
+        "lockOwner": "Lock Owner",
+        "lastError": "Letzter Fehler"
+      },
+      "notifications": {
+        "loadError": "Outbox Events konnten nicht geladen werden.",
+        "summaryError": "Outbox Übersicht konnte nicht geladen werden.",
+        "dispatchSuccess": "Dispatch abgeschlossen. Claimed: {claimed}, Published: {published}, Retry: {retried}, Dead: {dead}.",
+        "dispatchError": "Dispatch-Batch fehlgeschlagen.",
+        "resetStuckSuccess": "Stuck Events zurückgesetzt: {count}.",
+        "resetStuckError": "Zurücksetzen der Stuck Events fehlgeschlagen.",
+        "requeueDeadSuccess": "Dead Events erneut eingeplant: {count}.",
+        "requeueDeadError": "Replay der Dead Events fehlgeschlagen."
+      }
+    }
+  }
+}

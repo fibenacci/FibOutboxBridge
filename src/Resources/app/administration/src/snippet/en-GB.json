@@ -1,0 +1,54 @@
+{
+  "fib-outbox-bridge": {
+    "module": {
+      "title": "Outbox bridge",
+      "description": "Monitor the transactional outbox queue",
+      "navigation": "Outbox bridge"
+    },
+    "list": {
+      "title": "Outbox events",
+      "actions": {
+        "dispatchBatch": "Dispatch batch",
+        "resetStuck": "Reset stuck",
+        "requeueDead": "Replay dead",
+        "refresh": "Refresh",
+        "clearFilters": "Clear filters"
+      },
+      "filters": {
+        "title": "Filters",
+        "search": "Search",
+        "allStatuses": "All statuses"
+      },
+      "summary": {
+        "title": "Queue summary",
+        "pending": "Pending",
+        "processing": "Processing",
+        "published": "Published",
+        "dead": "Dead",
+        "lag": "Oldest pending lag"
+      },
+      "columns": {
+        "status": "Status",
+        "eventName": "Event",
+        "aggregateType": "Aggregate type",
+        "aggregateId": "Aggregate ID",
+        "attempts": "Attempts",
+        "occurredAt": "Occurred at",
+        "availableAt": "Available at",
+        "publishedAt": "Published at",
+        "lockOwner": "Lock owner",
+        "lastError": "Last error"
+      },
+      "notifications": {
+        "loadError": "Outbox events could not be loaded.",
+        "summaryError": "Outbox summary could not be loaded.",
+        "dispatchSuccess": "Dispatch finished. Claimed: {claimed}, published: {published}, retried: {retried}, dead: {dead}.",
+        "dispatchError": "Dispatch batch failed.",
+        "resetStuckSuccess": "Reset stuck events: {count}.",
+        "resetStuckError": "Reset stuck failed.",
+        "requeueDeadSuccess": "Requeued dead events: {count}.",
+        "requeueDeadError": "Replay dead failed."
+      }
+    }
+  }
+}

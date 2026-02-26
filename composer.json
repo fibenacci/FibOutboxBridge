@@ -1,0 +1,22 @@
+{
+  "name": "fib/outbox-bridge",
+  "description": "Transactional outbox bridge for external message queue / webhooks.",
+  "type": "shopware-platform-plugin",
+  "license": "proprietary",
+  "version": "1.0.0",
+  "require": {
+    "shopware/core": "*"
+  },
+  "extra": {
+    "shopware-plugin-class": "Fib\\OutboxBridge\\FibOutboxBridge",
+    "label": {
+      "de-DE": "Fib Outbox Bridge",
+      "en-GB": "Fib Outbox Bridge"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Fib\\OutboxBridge\\": "src/"
+    }
+  }
+}
