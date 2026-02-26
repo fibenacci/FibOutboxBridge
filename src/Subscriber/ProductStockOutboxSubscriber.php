@@ -74,6 +74,9 @@ class ProductStockOutboxSubscriber implements EventSubscriberInterface
             || $writeResult->hasPayload('isCloseout');
     }
 
+    /**
+     * @param array<string, mixed>|string $primaryKey
+     */
     private function normalizePrimaryKey(array|string $primaryKey): ?string
     {
         if (is_string($primaryKey)) {
