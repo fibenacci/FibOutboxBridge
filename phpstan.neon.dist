@@ -1,0 +1,14 @@
+parameters:
+    level: 6
+    paths:
+        - src
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+    excludePaths:
+        analyse:
+            - src/Resources/*
+    tmpDir: var/phpstan
+    treatPhpDocTypesAsCertain: false
+    checkMissingIterableValueType: false
+    reportUnmatchedIgnoredErrors: false
+

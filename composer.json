@@ -7,6 +7,19 @@
   "require": {
     "shopware/core": "*"
   },
+  "require-dev": {
+    "phpstan/phpstan": "^1.11",
+    "squizlabs/php_codesniffer": "^3.9"
+  },
+  "scripts": {
+    "lint": [
+      "@phpcs",
+      "@phpstan"
+    ],
+    "phpcs": "vendor/bin/phpcs --standard=phpcs.xml.dist",
+    "phpcbf": "vendor/bin/phpcbf --standard=phpcs.xml.dist",
+    "phpstan": "vendor/bin/phpstan analyse -c phpstan.neon.dist"
+  },
   "extra": {
     "shopware-plugin-class": "Fib\\OutboxBridge\\FibOutboxBridge",
     "label": {
@@ -17,6 +30,11 @@
   "autoload": {
     "psr-4": {
       "Fib\\OutboxBridge\\": "src/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "symfony/runtime": true
     }
   }
 }
