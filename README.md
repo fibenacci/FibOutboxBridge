@@ -190,7 +190,7 @@ $outboxEventBus->transactional(function (OutboxEventBus $bus) use ($service) {
 });
 ```
 
-## Kurz gesagt (Plausibilisierung)
+## Kurz gesagt
 
 Ohne Outbox:
 
