@@ -9,6 +9,4 @@ parameters:
             - src/Resources/*
     tmpDir: var/phpstan
     treatPhpDocTypesAsCertain: false
-    checkMissingIterableValueType: false
     reportUnmatchedIgnoredErrors: false
-

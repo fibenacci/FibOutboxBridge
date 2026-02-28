@@ -4,6 +4,7 @@ namespace Fib\OutboxBridge\Controller\Api;
 
 use Fib\OutboxBridge\Core\Outbox\Repository\OutboxRepository;
 use Fib\OutboxBridge\Core\Outbox\Service\OutboxDispatcher;
+use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -23,8 +24,11 @@ class OutboxActionController extends AbstractController
         defaults: ['_acl' => ['order.editor']],
         methods: ['POST']
     )]
-    public function dispatch(int $limit, string $workerId = 'admin'): JsonResponse
+    public function dispatch(RequestDataBag $dataBag): JsonResponse
     {
+        $limit = $dataBag->getInt('limit', 100);
+        $workerId = $dataBag->getString('workerId', 'admin');
+
         $result = $this->dispatcher->dispatchBatch($limit, $workerId);
 
         return new JsonResponse([
@@ -53,11 +57,14 @@ class OutboxActionController extends AbstractController
         defaults: ['_acl' => ['order.editor']],
         methods: ['POST']
     )]
-    public function requeueDead(int $limit, string $eventName): JsonResponse
+    public function requeueDead(RequestDataBag $dataBag): JsonResponse
     {
+        $limit = $dataBag->getInt('limit', 100);
+        $eventName = $dataBag->getString('eventName');
+
         return new JsonResponse([
             'data' => [
-                'requeued' => $this->repository->requeueDead($limit, $eventName),
+                'requeued' => $this->repository->requeueDead($limit, $eventName?: null),
             ],
         ]);
     }

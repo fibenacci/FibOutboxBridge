@@ -27,6 +27,7 @@ Component.register('fib-outbox-event-list', {
             summary: {
                 pending: 0,
                 processing: 0,
+                failed: 0,
                 published: 0,
                 dead: 0,
                 lagSeconds: null,
@@ -60,6 +61,7 @@ Component.register('fib-outbox-event-list', {
                 { value: '', label: this.$tc('fib-outbox-bridge.list.filters.allStatuses') },
                 { value: 'pending', label: 'pending' },
                 { value: 'processing', label: 'processing' },
+                { value: 'failed', label: 'failed' },
                 { value: 'published', label: 'published' },
                 { value: 'dead', label: 'dead' },
             ];
@@ -117,13 +119,15 @@ Component.register('fib-outbox-event-list', {
             return Promise.all([
                 this.countByStatus('pending'),
                 this.countByStatus('processing'),
+                this.countByStatus('failed'),
                 this.countByStatus('published'),
                 this.countByStatus('dead'),
                 this.getOldestPendingLagSeconds(),
-            ]).then(([pending, processing, published, dead, lagSeconds]) => {
+            ]).then(([pending, processing, failed, published, dead, lagSeconds]) => {
                 this.summary = {
                     pending,
                     processing,
+                    failed,
                     published,
                     dead,
                     lagSeconds,
@@ -281,6 +285,10 @@ Component.register('fib-outbox-event-list', {
                 });
         },
 
+        openRouting() {
+            this.$router.push({ name: 'fib.outbox.bridge.routing' });
+        },
+
         formatDate(value) {
             return value ? (Shopware.Utils.format.date(value) || value) : '—';
         },
@@ -296,6 +304,9 @@ Component.register('fib-outbox-event-list', {
                 return 'warning';
             }
             if (status === 'dead') {
+                return 'danger';
+            }
+            if (status === 'failed') {
                 return 'danger';
             }
 

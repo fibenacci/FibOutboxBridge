@@ -3,30 +3,6 @@
         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
     <card>
         <title>Outbox Bridge</title>
-        <input-field type="single-select">
-            <name>publisherMode</name>
-            <label>Publisher-Modus</label>
-            <defaultValue>messenger</defaultValue>
-            <options>
-                <option>
-                    <id>messenger</id>
-                    <name>Messenger (z.B. AMQP/RabbitMQ via Symfony routing)</name>
-                </option>
-                <option>
-                    <id>webhook</id>
-                    <name>HTTP Webhook</name>
-                </option>
-                <option>
-                    <id>null</id>
-                    <name>Null (nur Logging / Entwicklung)</name>
-                </option>
-            </options>
-        </input-field>
-        <input-field type="text">
-            <name>webhookUrl</name>
-            <label>Webhook URL</label>
-            <placeholder>https://example.tld/outbox/events</placeholder>
-        </input-field>
         <input-field type="int">
             <name>dispatchBatchSize</name>
             <label>Dispatch Batch Size</label>

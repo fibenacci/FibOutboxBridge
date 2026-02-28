@@ -1,0 +1,168 @@
+<sw-page class="fib-outbox-routing">
+    <template #smart-bar-header>
+        <h2>{{ $tc('fib-outbox-bridge.routing.title') }}</h2>
+    </template>
+
+    <template #smart-bar-actions>
+        <sw-button variant="ghost" @click="loadAll" :is-loading="isLoading">
+            {{ $tc('fib-outbox-bridge.routing.actions.refresh') }}
+        </sw-button>
+        <sw-button variant="primary" @click="openCreateTargetModal">
+            {{ $tc('fib-outbox-bridge.routing.actions.addTarget') }}
+        </sw-button>
+        <sw-button variant="primary" @click="openCreateRouteModal">
+            {{ $tc('fib-outbox-bridge.routing.actions.addRoute') }}
+        </sw-button>
+    </template>
+
+    <template #content>
+        <sw-card-view>
+            <sw-card :title="$tc('fib-outbox-bridge.routing.targets.title')">
+                <sw-data-grid
+                    :data-source="targets"
+                    :columns="targetColumns"
+                    :is-loading="isLoading"
+                    :allow-inline-edit="false"
+                    :show-actions="true"
+                >
+                    <template #column-isActive="{ item }">
+                        <sw-label appearance="pill" :variant="item.isActive ? 'success' : 'danger'">
+                            {{ item.isActive ? $tc('fib-outbox-bridge.routing.common.active') : $tc('fib-outbox-bridge.routing.common.inactive') }}
+                        </sw-label>
+                    </template>
+
+                    <template #actions="{ item }">
+                        <sw-context-menu-item @click="openEditTargetModal(item)">
+                            {{ $tc('fib-outbox-bridge.routing.actions.edit') }}
+                        </sw-context-menu-item>
+                        <sw-context-menu-item variant="danger" @click="deleteTarget(item)">
+                            {{ $tc('fib-outbox-bridge.routing.actions.delete') }}
+                        </sw-context-menu-item>
+                    </template>
+                </sw-data-grid>
+            </sw-card>
+
+            <sw-card :title="$tc('fib-outbox-bridge.routing.routes.title')">
+                <sw-data-grid
+                    :data-source="routes"
+                    :columns="routeColumns"
+                    :is-loading="isLoading"
+                    :allow-inline-edit="false"
+                    :show-actions="true"
+                >
+                    <template #column-isActive="{ item }">
+                        <sw-label appearance="pill" :variant="item.isActive ? 'success' : 'danger'">
+                            {{ item.isActive ? $tc('fib-outbox-bridge.routing.common.active') : $tc('fib-outbox-bridge.routing.common.inactive') }}
+                        </sw-label>
+                    </template>
+
+                    <template #column-targetKeys="{ item }">
+                        {{ (item.targetKeys || []).join(', ') }}
+                    </template>
+
+                    <template #actions="{ item }">
+                        <sw-context-menu-item @click="openEditRouteModal(item)">
+                            {{ $tc('fib-outbox-bridge.routing.actions.edit') }}
+                        </sw-context-menu-item>
+                        <sw-context-menu-item variant="danger" @click="deleteRoute(item)">
+                            {{ $tc('fib-outbox-bridge.routing.actions.delete') }}
+                        </sw-context-menu-item>
+                    </template>
+                </sw-data-grid>
+            </sw-card>
+        </sw-card-view>
+
+        <sw-modal v-if="showTargetModal" :title="targetModalTitle" @modal-close="closeTargetModal">
+            <sw-text-field
+                v-model:value="targetDraft.name"
+                :label="$tc('fib-outbox-bridge.routing.targets.fields.name')"
+                required
+            />
+            <sw-text-field
+                v-model:value="targetDraft.technicalName"
+                :label="$tc('fib-outbox-bridge.routing.targets.fields.technicalName')"
+                :help-text="$tc('fib-outbox-bridge.routing.targets.fields.technicalNameHelp')"
+                required
+                :disabled="isEditingTarget"
+            />
+            <sw-single-select
+                v-model:value="targetDraft.type"
+                :label="$tc('fib-outbox-bridge.routing.targets.fields.type')"
+                :options="targetTypeOptions"
+                label-property="label"
+                value-property="value"
+            />
+            <sw-switch-field
+                v-model:value="targetDraft.isActive"
+                :label="$tc('fib-outbox-bridge.routing.targets.fields.isActive')"
+            />
+
+            <sw-text-field
+                v-if="targetDraft.type === 'webhook'"
+                v-model:value="targetDraft.webhookUrl"
+                :label="$tc('fib-outbox-bridge.routing.targets.fields.webhookUrl')"
+            />
+            <sw-text-field
+                v-if="targetDraft.type === 'messenger'"
+                v-model:value="targetDraft.routingKey"
+                :label="$tc('fib-outbox-bridge.routing.targets.fields.routingKey')"
+                :placeholder="$tc('fib-outbox-bridge.routing.targets.fields.routingKeyPlaceholder')"
+            />
+            <sw-text-field
+                v-if="targetDraft.type === 'flow'"
+                v-model:value="targetDraft.flowEventName"
+                :label="$tc('fib-outbox-bridge.routing.targets.fields.flowEventName')"
+                :placeholder="$tc('fib-outbox-bridge.routing.targets.fields.flowEventNamePlaceholder')"
+            />
+
+            <template #modal-footer>
+                <sw-button variant="ghost" @click="closeTargetModal">
+                    {{ $tc('fib-outbox-bridge.routing.actions.cancel') }}
+                </sw-button>
+                <sw-button variant="primary" @click="saveTarget" :is-loading="saveLoading">
+                    {{ $tc('fib-outbox-bridge.routing.actions.save') }}
+                </sw-button>
+            </template>
+        </sw-modal>
+
+        <sw-modal v-if="showRouteModal" :title="routeModalTitle" @modal-close="closeRouteModal">
+            <sw-text-field
+                v-model:value="routeDraft.name"
+                :label="$tc('fib-outbox-bridge.routing.routes.fields.name')"
+                required
+            />
+            <sw-text-field
+                v-model:value="routeDraft.eventPattern"
+                :label="$tc('fib-outbox-bridge.routing.routes.fields.eventPattern')"
+                :help-text="$tc('fib-outbox-bridge.routing.routes.fields.eventPatternHelp')"
+                required
+            />
+            <sw-number-field
+                v-model:value="routeDraft.priority"
+                :label="$tc('fib-outbox-bridge.routing.routes.fields.priority')"
+                number-type="int"
+                :step="1"
+            />
+            <sw-switch-field
+                v-model:value="routeDraft.isActive"
+                :label="$tc('fib-outbox-bridge.routing.routes.fields.isActive')"
+            />
+            <sw-multi-select
+                v-model:value="routeDraft.targetKeys"
+                :label="$tc('fib-outbox-bridge.routing.routes.fields.targetKeys')"
+                :options="targetOptions"
+                label-property="label"
+                value-property="value"
+            />
+
+            <template #modal-footer>
+                <sw-button variant="ghost" @click="closeRouteModal">
+                    {{ $tc('fib-outbox-bridge.routing.actions.cancel') }}
+                </sw-button>
+                <sw-button variant="primary" @click="saveRoute" :is-loading="saveLoading">
+                    {{ $tc('fib-outbox-bridge.routing.actions.save') }}
+                </sw-button>
+            </template>
+        </sw-modal>
+    </template>
+</sw-page>

@@ -13,24 +13,6 @@ class OutboxSettings
     ) {
     }
 
-    public function getPublisherMode(): string
-    {
-        $mode = $this->systemConfigService->getString(self::CONFIG_PREFIX . 'publisherMode');
-
-        if ($mode === '') {
-            return 'messenger';
-        }
-
-        return $mode;
-    }
-
-    public function getWebhookUrl(): ?string
-    {
-        $url = $this->systemConfigService->getString(self::CONFIG_PREFIX . 'webhookUrl');
-
-        return $url === '' ? null : $url;
-    }
-
     public function getDispatchBatchSize(): int
     {
         $value = $this->systemConfigService->getInt(self::CONFIG_PREFIX . 'dispatchBatchSize');

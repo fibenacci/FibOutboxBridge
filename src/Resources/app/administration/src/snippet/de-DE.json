@@ -2,7 +2,7 @@
   "fib-outbox-bridge": {
     "module": {
       "title": "Outbox Bridge",
-      "description": "Transaktionale Outbox Queue überwachen",
+      "description": "Transaktionale Outbox überwachen und routen",
       "navigation": "Outbox Bridge"
     },
     "list": {
@@ -12,7 +12,8 @@
         "resetStuck": "Stuck zurücksetzen",
         "requeueDead": "Dead replayen",
         "refresh": "Aktualisieren",
-        "clearFilters": "Filter zurücksetzen"
+        "clearFilters": "Filter zurücksetzen",
+        "routing": "Routing"
       },
       "filters": {
         "title": "Filter",
@@ -23,19 +24,20 @@
         "title": "Queue Übersicht",
         "pending": "Pending",
         "processing": "Processing",
+        "failed": "Failed",
         "published": "Published",
         "dead": "Dead",
-        "lag": "Älteste Pending-Verzögerung"
+        "lag": "Ältestes Pending-Lag"
       },
       "columns": {
         "status": "Status",
         "eventName": "Event",
-        "aggregateType": "Aggregattyp",
-        "aggregateId": "Aggregat-ID",
+        "aggregateType": "Aggregate Typ",
+        "aggregateId": "Aggregate ID",
         "attempts": "Versuche",
-        "occurredAt": "Occurred At",
-        "availableAt": "Available At",
-        "publishedAt": "Published At",
+        "occurredAt": "Occurred at",
+        "availableAt": "Available at",
+        "publishedAt": "Published at",
         "lockOwner": "Lock Owner",
         "lastError": "Letzter Fehler"
       },
@@ -45,9 +47,113 @@
         "dispatchSuccess": "Dispatch abgeschlossen. Claimed: {claimed}, Published: {published}, Retry: {retried}, Dead: {dead}.",
         "dispatchError": "Dispatch-Batch fehlgeschlagen.",
         "resetStuckSuccess": "Stuck Events zurückgesetzt: {count}.",
-        "resetStuckError": "Zurücksetzen der Stuck Events fehlgeschlagen.",
-        "requeueDeadSuccess": "Dead Events erneut eingeplant: {count}.",
-        "requeueDeadError": "Replay der Dead Events fehlgeschlagen."
+        "resetStuckError": "Stuck-Reset fehlgeschlagen.",
+        "requeueDeadSuccess": "Dead Events requeued: {count}.",
+        "requeueDeadError": "Replay dead fehlgeschlagen."
+      }
+    },
+    "routing": {
+      "title": "Outbox Routing",
+      "common": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv"
+      },
+      "actions": {
+        "refresh": "Aktualisieren",
+        "addTarget": "Target hinzufügen",
+        "addRoute": "Route hinzufügen",
+        "edit": "Bearbeiten",
+        "delete": "Löschen",
+        "save": "Speichern",
+        "cancel": "Abbrechen"
+      },
+      "targets": {
+        "title": "Targets",
+        "columns": {
+          "name": "Name",
+          "technicalName": "Technischer Name",
+          "type": "Typ",
+          "isActive": "Status"
+        },
+        "types": {
+          "webhook": "Webhook",
+          "messenger": "Messenger",
+          "flow": "Flow Event",
+          "null": "Null"
+        },
+        "fields": {
+          "name": "Name",
+          "technicalName": "Technischer Name",
+          "technicalNameHelp": "Stabiler Schlüssel für Routes, z. B. erp_webhook",
+          "type": "Target Typ",
+          "isActive": "Aktiv",
+          "webhookUrl": "Webhook URL",
+          "routingKey": "Routing Key",
+          "routingKeyPlaceholder": "Leer = Eventname verwenden",
+          "flowEventName": "Flow Eventname",
+          "flowEventNamePlaceholder": "fib.outbox.forwarded"
+        },
+        "modal": {
+          "createTitle": "Target erstellen",
+          "editTitle": "Target bearbeiten"
+        }
+      },
+      "routes": {
+        "title": "Routes",
+        "columns": {
+          "name": "Name",
+          "eventPattern": "Event Pattern",
+          "priority": "Priorität",
+          "targetKeys": "Targets",
+          "isActive": "Status"
+        },
+        "fields": {
+          "name": "Name",
+          "eventPattern": "Event Pattern",
+          "eventPatternHelp": "Wildcard * verwenden, z. B. catalog.product.*",
+          "priority": "Priorität",
+          "isActive": "Aktiv",
+          "targetKeys": "Targets"
+        },
+        "modal": {
+          "createTitle": "Route erstellen",
+          "editTitle": "Route bearbeiten"
+        }
+      },
+      "notifications": {
+        "loadTargetsError": "Targets konnten nicht geladen werden.",
+        "loadRoutesError": "Routes konnten nicht geladen werden.",
+        "targetValidationError": "Name und technischer Name sind erforderlich.",
+        "targetSavedSuccess": "Target gespeichert.",
+        "targetSaveError": "Target konnte nicht gespeichert werden.",
+        "targetDeleteSuccess": "Target gelöscht.",
+        "targetDeleteError": "Target konnte nicht gelöscht werden.",
+        "routeValidationError": "Name, Event Pattern und mindestens ein Target sind erforderlich.",
+        "routeSavedSuccess": "Route gespeichert.",
+        "routeSaveError": "Route konnte nicht gespeichert werden.",
+        "routeDeleteSuccess": "Route gelöscht.",
+        "routeDeleteError": "Route konnte nicht gelöscht werden."
+      }
+    },
+    "flow": {
+      "actions": {
+        "sendToDestination": "Outbox: an Destination senden",
+        "description": "Typ: {type}<br>Destination: {destination}",
+        "descriptionMissing": "Destination ist nicht konfiguriert."
+      },
+      "modal": {
+        "title": "Outbox-Destination",
+        "fields": {
+          "destinationType": "Destination-Typ",
+          "destination": "Destination",
+          "destinationPlaceholder": "Destination auswählen"
+        },
+        "destinationTypes": {
+          "webhook": "Webhook",
+          "messenger": "Messenger",
+          "flow": "Flow-Event"
+        },
+        "noDestinations": "Keine aktive Destination für den gewählten Typ gefunden."
       }
     }
   }

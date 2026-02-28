@@ -83,7 +83,7 @@ class ProductStockOutboxSubscriber implements EventSubscriberInterface
             return $primaryKey;
         }
 
-        $id = $primaryKey['id'] ?? null;
+        $id = $primaryKey['id'];
         if (empty($id)) {
             return null;
         }

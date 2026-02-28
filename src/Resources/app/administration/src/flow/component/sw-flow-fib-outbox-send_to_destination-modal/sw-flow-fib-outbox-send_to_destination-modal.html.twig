@@ -1,0 +1,45 @@
+<sw-modal
+    class="sw-flow-fib-outbox-send-to-destination-modal"
+    :title="$tc('fib-outbox-bridge.flow.modal.title')"
+    @modal-close="onClose"
+>
+    <sw-single-select
+        v-model:value="config.destinationType"
+        :label="$tc('fib-outbox-bridge.flow.modal.fields.destinationType')"
+        :options="destinationTypeOptions"
+        :error="error.destinationType"
+    />
+
+    <sw-single-select
+        v-model:value="config.destinationId"
+        :label="$tc('fib-outbox-bridge.flow.modal.fields.destination')"
+        :placeholder="$tc('fib-outbox-bridge.flow.modal.fields.destinationPlaceholder')"
+        :options="destinationOptions"
+        :disabled="isLoading"
+        :error="error.destinationId"
+    />
+
+    <sw-alert
+        v-if="!isLoading && destinationOptions.length === 0"
+        variant="warning"
+    >
+        {{ $tc('fib-outbox-bridge.flow.modal.noDestinations') }}
+    </sw-alert>
+
+    <template #modal-footer>
+        <sw-button
+            size="small"
+            @click="onClose"
+        >
+            {{ $tc('global.default.cancel') }}
+        </sw-button>
+        <sw-button-process
+            size="small"
+            variant="primary"
+            :process-success="false"
+            @click="onSave"
+        >
+            {{ $tc('global.default.save') }}
+        </sw-button-process>
+    </template>
+</sw-modal>

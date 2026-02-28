@@ -2,7 +2,7 @@
   "fib-outbox-bridge": {
     "module": {
       "title": "Outbox bridge",
-      "description": "Monitor the transactional outbox queue",
+      "description": "Monitor and route transactional outbox events",
       "navigation": "Outbox bridge"
     },
     "list": {
@@ -12,7 +12,8 @@
         "resetStuck": "Reset stuck",
         "requeueDead": "Replay dead",
         "refresh": "Refresh",
-        "clearFilters": "Clear filters"
+        "clearFilters": "Clear filters",
+        "routing": "Routing"
       },
       "filters": {
         "title": "Filters",
@@ -23,6 +24,7 @@
         "title": "Queue summary",
         "pending": "Pending",
         "processing": "Processing",
+        "failed": "Failed",
         "published": "Published",
         "dead": "Dead",
         "lag": "Oldest pending lag"
@@ -48,6 +50,110 @@
         "resetStuckError": "Reset stuck failed.",
         "requeueDeadSuccess": "Requeued dead events: {count}.",
         "requeueDeadError": "Replay dead failed."
+      }
+    },
+    "routing": {
+      "title": "Outbox routing",
+      "common": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "actions": {
+        "refresh": "Refresh",
+        "addTarget": "Add target",
+        "addRoute": "Add route",
+        "edit": "Edit",
+        "delete": "Delete",
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "targets": {
+        "title": "Targets",
+        "columns": {
+          "name": "Name",
+          "technicalName": "Technical name",
+          "type": "Type",
+          "isActive": "Status"
+        },
+        "types": {
+          "webhook": "Webhook",
+          "messenger": "Messenger",
+          "flow": "Flow event",
+          "null": "Null"
+        },
+        "fields": {
+          "name": "Name",
+          "technicalName": "Technical name",
+          "technicalNameHelp": "Stable key used by routes, e.g. erp_webhook",
+          "type": "Target type",
+          "isActive": "Active",
+          "webhookUrl": "Webhook URL",
+          "routingKey": "Routing key",
+          "routingKeyPlaceholder": "Uses event name when empty",
+          "flowEventName": "Flow event name",
+          "flowEventNamePlaceholder": "fib.outbox.forwarded"
+        },
+        "modal": {
+          "createTitle": "Create target",
+          "editTitle": "Edit target"
+        }
+      },
+      "routes": {
+        "title": "Routes",
+        "columns": {
+          "name": "Name",
+          "eventPattern": "Event pattern",
+          "priority": "Priority",
+          "targetKeys": "Targets",
+          "isActive": "Status"
+        },
+        "fields": {
+          "name": "Name",
+          "eventPattern": "Event pattern",
+          "eventPatternHelp": "Use * wildcard, e.g. catalog.product.*",
+          "priority": "Priority",
+          "isActive": "Active",
+          "targetKeys": "Targets"
+        },
+        "modal": {
+          "createTitle": "Create route",
+          "editTitle": "Edit route"
+        }
+      },
+      "notifications": {
+        "loadTargetsError": "Targets could not be loaded.",
+        "loadRoutesError": "Routes could not be loaded.",
+        "targetValidationError": "Name and technical name are required.",
+        "targetSavedSuccess": "Target saved.",
+        "targetSaveError": "Target could not be saved.",
+        "targetDeleteSuccess": "Target deleted.",
+        "targetDeleteError": "Target could not be deleted.",
+        "routeValidationError": "Name, event pattern and at least one target are required.",
+        "routeSavedSuccess": "Route saved.",
+        "routeSaveError": "Route could not be saved.",
+        "routeDeleteSuccess": "Route deleted.",
+        "routeDeleteError": "Route could not be deleted."
+      }
+    },
+    "flow": {
+      "actions": {
+        "sendToDestination": "Outbox: send to destination",
+        "description": "Type: {type}<br>Destination: {destination}",
+        "descriptionMissing": "Destination is not configured."
+      },
+      "modal": {
+        "title": "Outbox destination",
+        "fields": {
+          "destinationType": "Destination type",
+          "destination": "Destination",
+          "destinationPlaceholder": "Select destination"
+        },
+        "destinationTypes": {
+          "webhook": "Webhook",
+          "messenger": "Messenger",
+          "flow": "Flow event"
+        },
+        "noDestinations": "No active destination found for the selected type."
       }
     }
   }

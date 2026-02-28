@@ -6,6 +6,12 @@
     <template #smart-bar-actions>
         <sw-button
             variant="ghost"
+            @click="openRouting"
+        >
+            {{ $tc('fib-outbox-bridge.list.actions.routing') }}
+        </sw-button>
+        <sw-button
+            variant="ghost"
             @click="runResetStuck"
             :is-loading="actionLoading.resetStuck"
             :disabled="isAnyActionLoading()"
@@ -42,6 +48,7 @@
                 <div class="sw-grid sw-grid--gap">
                     <div><strong>{{ $tc('fib-outbox-bridge.list.summary.pending') }}:</strong> {{ summary.pending }}</div>
                     <div><strong>{{ $tc('fib-outbox-bridge.list.summary.processing') }}:</strong> {{ summary.processing }}</div>
+                    <div><strong>{{ $tc('fib-outbox-bridge.list.summary.failed') }}:</strong> {{ summary.failed }}</div>
                     <div><strong>{{ $tc('fib-outbox-bridge.list.summary.published') }}:</strong> {{ summary.published }}</div>
                     <div><strong>{{ $tc('fib-outbox-bridge.list.summary.dead') }}:</strong> {{ summary.dead }}</div>
                     <div><strong>{{ $tc('fib-outbox-bridge.list.summary.lag') }}:</strong> {{ lagLabel() }}</div>
