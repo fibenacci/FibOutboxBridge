@@ -122,8 +122,3 @@ Bereiche:
 - `fib:outbox:reset-stuck`
 
 Scheduled Task dispatcht regelmäßig.
-
-## Shopware Community / Beyond
-
-- Community: schließt die Lücke für robuste externe Outbound-Integrationen
-- Beyond: ergänzt Flow-Webhooks um Zustellintegrität, Retry, Dead-Letter und Replay-Fähigkeit
