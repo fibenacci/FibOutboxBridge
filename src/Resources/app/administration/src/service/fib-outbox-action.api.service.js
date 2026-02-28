@@ -30,6 +30,12 @@ class FibOutboxActionApiService extends ApiService {
             headers: this.getBasicHeaders(),
         }).then((response) => ApiService.handleResponse(response));
     }
+
+    getDestinationTypes() {
+        return this.httpClient.get(`/_action/${this.apiEndpoint}/destination-types`, {
+            headers: this.getBasicHeaders(),
+        }).then((response) => ApiService.handleResponse(response));
+    }
 }
 
 Shopware.Service().register('fibOutboxActionService', () => new FibOutboxActionApiService(

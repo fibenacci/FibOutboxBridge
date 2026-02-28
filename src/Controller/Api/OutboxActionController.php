@@ -2,6 +2,7 @@
 
 namespace Fib\OutboxBridge\Controller\Api;
 
+use Fib\OutboxBridge\Core\Outbox\Destination\OutboxDestinationStrategyRegistry;
 use Fib\OutboxBridge\Core\Outbox\Repository\OutboxRepository;
 use Fib\OutboxBridge\Core\Outbox\Service\OutboxDispatcher;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
@@ -14,7 +15,8 @@ class OutboxActionController extends AbstractController
 {
     public function __construct(
         private readonly OutboxDispatcher $dispatcher,
-        private readonly OutboxRepository $repository
+        private readonly OutboxRepository $repository,
+        private readonly OutboxDestinationStrategyRegistry $destinationStrategyRegistry
     ) {
     }
 
@@ -66,6 +68,19 @@ class OutboxActionController extends AbstractController
             'data' => [
                 'requeued' => $this->repository->requeueDead($limit, $eventName?: null),
             ],
+        ]);
+    }
+
+    #[Route(
+        path: '/api/_action/fib-outbox/destination-types',
+        name: 'api.action.fib_outbox.destination_types',
+        defaults: ['_acl' => ['fib_outbox_destination:read']],
+        methods: ['GET']
+    )]
+    public function destinationTypes(): JsonResponse
+    {
+        return new JsonResponse([
+            'data' => $this->destinationStrategyRegistry->getTypeDefinitions(),
         ]);
     }
 }

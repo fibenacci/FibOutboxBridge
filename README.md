@@ -1,109 +1,118 @@
 # FibOutboxBridge
 
-Plugin für eine transaktionale Outbox in Shopware 6 mit Flow-Action-basierter Zustellung an generische Destination-Typen.
+Transaktionale Outbox für Shopware 6 mit Flow-Builder-Action als Enqueue-Schicht und generischer, erweiterbarer Destination-Pipeline.
 
-## Warum das Plugin notwendig ist
+## Problem und Nutzen
 
-Das Kernproblem bei Integrationen ist ein Commit-Gap:
+Ohne Outbox entsteht ein Commit-Gap:
 
-1. Shopware schreibt den neuen Zustand in die DB (`COMMIT` erfolgreich)
-2. Danach wird extern publiziert (MQ/Webhook)
-3. Genau dieser Publish schlägt fehl (Timeout, Netzwerk, Broker down, Deploy, Crash)
+1. Zustand wird in der DB gespeichert (`COMMIT` erfolgreich)
+2. Danach wird extern publiziert (Webhook/MQ/etc.)
+3. Publish schlägt fehl (Timeout, Netzwerk, Third-Party down, Deploy, Crash)
 
-Dann ist der Shop-State bereits geändert, aber das externe System weiß nichts davon.
-Dieses Inkonsistenzfenster ist in verteilten Systemen normal und nicht mit "mehr try/catch" lösbar.
+Ergebnis: Shop-State ist geändert, Downstream-Systeme sind inkonsistent.
 
-## Was die Outbox konkret verbessert
+Die Outbox löst das durch Entkopplung:
 
-Die Outbox entkoppelt **State-Persistenz** von **externer Auslieferung**:
+- Persistenz zuerst (Event landet sicher in DB)
+- Zustellung asynchron durch Worker
+- Retry/Backoff/Dead-Letter statt Event-Verlust
 
-1. Domain-Write + Outbox-Event werden zusammen persistent geschrieben
-2. Dispatcher-Worker liefert später asynchron aus
-3. Fehler führen zu Retry/Backoff statt Event-Verlust
+Liefersemantik ist **at-least-once**.  
+Für „exactly-once-Verhalten“ braucht der Consumer Idempotenz (`eventId`-Dedupe).
 
-Praktischer Nutzen:
+## Zielarchitektur
 
-- Kein stiller Event-Verlust nach DB-Commit
-- Recoverbar nach Broker-/Webhook-Ausfall
-- Kontrollierbarer Betrieb (Pending/Dead/Replay/Reset)
-- Saubere Trennung von Request-Latenz und Integrationskanal
+`Flow Action -> Outbox -> Worker -> Destination Strategy -> Status/Retry/Observability`
 
-## Liefersemantik (realistisch)
+Konkret:
 
-Die Zustellung ist **at-least-once**.
-Für "exactly-once-Verhalten" braucht der Consumer Idempotenz (`eventId` dedupe).
+1. Flow nutzt Action `action.fib.outbox.send.to.destination`
+2. Action schreibt in `fib_outbox_event` + `fib_outbox_delivery`
+3. Dispatcher claimt Deliveries mit Locking
+4. Strategy publiziert an Destination
+5. Status wird aktualisiert (`pending|processing|failed|published|dead`)
 
-## Architektur (Hybrid-Modell)
+Wichtig:
 
-Das Plugin nutzt bewusst **DBAL + DAL**:
+- `event_name` in der Outbox ist das auslösende Business-Event (z. B. `checkout.order.placed`)
+- die Enqueue-Action wird als Metadatum geführt (`meta.source`)
 
-- DBAL im Queue-Kern (Claim/Lock/Retry/Backoff, konkurrierende Worker)
-- DAL für Admin-CRUD und Transparenz (Destinations, Events)
+## Kernkomponenten
 
-Warum DBAL im Kern:
+- `fib_outbox_event`: Event-Persistenz
+- `fib_outbox_delivery`: Zustellversuche pro Destination
+- `fib_outbox_destination`: Destination-Definitionen
+- `OutboxDispatcher`: Claim/Retry/Backoff/Dead-Letter
+- `OutboxTargetPublisher`: delegiert an Strategy Registry
+- `OutboxDestinationStrategyRegistry`: dynamische Destination-Typen
 
-- Dispatcher braucht Work-Queue-Semantik mit Row-Locking/Claiming
-- Das ist im DAL nicht robust genug ausdrückbar
+## Flow-Builder-Integration
 
-Warum DAL trotzdem:
+- Action: `action.fib.outbox.send.to.destination`
+- Konfiguration in Action:
+  - `destinationType`
+  - `destinationId`
+- Kein globaler Single-Webhook mehr
+- Routing über Event-Pattern ist nicht mehr der primäre Enqueue-Pfad
 
-- Gute Admin-Bedienbarkeit
-- Entity-Listing/Filter/CRUD ohne Sonderlogik
+## Destination-Strategien (erweiterbar)
 
-## Enthaltene Komponenten
+Strategien werden per Interface + Service-Tag registriert.
 
-- `fib_outbox_event` (Events)
-- `fib_outbox_delivery` (Delivery pro Destination)
-- `fib_outbox_destination` (Destinationen)
-- Flow Action als Enqueue-Schicht:
-  - `action.fib.outbox.send.to.destination` (mit `destinationType` + `destinationId` in der Action-Konfiguration)
-- `OutboxEventBus` für transaktionales Recording
-- Dispatcher mit Locking, Retry, Backoff, Dead-Letter
-- Admin-Modul:
-  - Event-Monitoring
-  - Destination-Verwaltung (ohne JSON-Datei)
-- Flow-Business-Events:
-  - `fib.outbox.forwarded` (Flow-Target)
-  - `fib.outbox.delivery.failed`
+- Interface: `OutboxDestinationStrategyInterface`
+- Registry: `OutboxDestinationStrategyRegistry`
+- Tag: `fib_outbox.destination_strategy`
 
-## Zielarchitektur: Flow Action -> Outbox -> Worker -> Connector
+Built-in Typen:
 
-Es gibt keine globale `webhookUrl`/`publisherMode`/`routingConfig` mehr.
-Outbound wird explizit im Flow Builder ausgelöst:
+- `webhook`
+- `messenger`
+- `flow`
+- `sftp`
+- `centrifugo`
+- `null`
 
-1. In Flow die Action `send_to_destination` wählen
-2. In der Action den Destination-Typ und die konkrete Destination auswählen
-3. Action schreibt nur in die Outbox (`fib_outbox_event` + `fib_outbox_delivery`)
-4. Worker liefert asynchron genau diese Destination aus
+### Neue Destination hinzufügen
 
-Beispiele:
+1. Klasse implementieren: `OutboxDestinationStrategyInterface`
+2. `getType()`, `getLabel()`, `getConfigFields()`, `validateConfig()`, `publish()` implementieren
+3. Service in `services.xml` registrieren und mit `fib_outbox.destination_strategy` taggen
 
-- Flow „Bestellung platziert“ + Destination Typ `webhook` + Destination `erp-order-webhook`
-- Flow „Kunde registriert“ + Destination Typ `messenger` + Destination `crm-events`
+Dadurch erscheinen Typ und Konfig-Felder automatisch in der Admin-Destination-Verwaltung und sind im Dispatcher verfügbar.
 
-## Flow-Builder-Integritätsschicht
+## Hinweise zu `sftp` und `centrifugo`
 
-Für Reaktionen auf Integritätsprobleme steht ein Delivery-Fehler-Event bereit.
-Damit kann ein Shopbetreiber in Flows sauber reagieren, z. B.:
+- `sftp` benötigt die PHP-Erweiterung `ssh2` im Runtime-Container.
+- `centrifugo` nutzt die HTTP-API (`apiUrl`, `apiKey`, `channel`).
 
-- bei `fib.outbox.delivery.failed` internen Alert senden (nur bei terminalem `dead`)
+## Integritätsschicht im Flow Builder
 
-Damit wird die Integritätsschicht in den Flow Builder verlagert, statt starr im Code.
+Bei terminalen Fehlern wird `fib.outbox.delivery.failed` ausgelöst.  
+Damit können Flows auf Integritätsprobleme reagieren (Alert, Ticket, Fallback-Prozess).
 
-## Dispatch-Ablauf
+Zusätzlich für Flow-Ziele:
 
-1. Deliveries claimen (Lock + Worker Owner)
-2. Destination Connector publishen (`messenger`/`webhook`/`flow`/`null`)
+- `fib.outbox.forwarded`
+
+## Dispatch und Status
+
+Dispatcher-Ablauf:
+
+1. Claim von fälligen Deliveries
+2. Publish über passende Strategy
 3. Erfolg -> `published`
-4. Fehler -> `failed` + Retry mit exponentiellem Backoff
-5. Bei Max-Attempts -> `dead`
-6. Event-Status wird aus Delivery-Status aggregiert
+4. Fehler -> `failed` + `available_at` (Backoff)
+5. max attempts erreicht -> `dead`
 
-Tracking-Metadaten:
+Event-Status wird aus den Delivery-Status aggregiert.
 
-- `delivery_id` wird durchgereicht
-- bei Webhook als Header (`X-Outbox-Delivery-Id`, `X-Outbox-Destination-*`)
-- bei Flow als verfügbare Werte (`deliveryId`, `destinationId`, `destinationKey`)
+## Administration
+
+Bereiche:
+
+- Event-Monitoring (Filter, Status, Lag, Aktionen)
+- Destination-Verwaltung (dynamische Typen und typabhängige Konfig-Felder)
 
 ## CLI / Betrieb
 
@@ -114,23 +123,7 @@ Tracking-Metadaten:
 
 Scheduled Task dispatcht regelmäßig.
 
-## Shopware Beyond / Community Einordnung
+## Shopware Community / Beyond
 
-- Community: Plugin liefert fehlende, robuste Webhook-/MQ-Fähigkeit über Outbox
-- Beyond: Auch mit Flow-Webhooks bleibt Outbox sinnvoll, wenn Zustellintegrität, Retry, Dead-Letter und Replay benötigt werden
-
-## Beispiel: transaktionaler Write
-
-```php
-$outboxEventBus->transactional(function (OutboxEventBus $bus) use ($service, $productId) {
-    $service->doWrite();
-
-    $bus->recordNamed(
-        'catalog.product.stock_changed.v1',
-        'product',
-        $productId,
-        ['stock' => 9],
-        ['correlationId' => '...']
-    );
-});
-```
+- Community: schließt die Lücke für robuste externe Outbound-Integrationen
+- Beyond: ergänzt Flow-Webhooks um Zustellintegrität, Retry, Dead-Letter und Replay-Fähigkeit

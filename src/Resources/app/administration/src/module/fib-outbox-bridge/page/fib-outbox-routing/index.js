@@ -3,12 +3,10 @@ import template from './fib-outbox-routing.html.twig';
 const { Component, Context, Data, Mixin } = Shopware;
 const { Criteria } = Data;
 
-const DEFAULT_FLOW_EVENT_NAME = 'fib.outbox.forwarded';
-
 Component.register('fib-outbox-routing', {
     template,
 
-    inject: ['repositoryFactory'],
+    inject: ['repositoryFactory', 'fibOutboxActionService'],
 
     mixins: [
         Mixin.getByName('notification'),
@@ -19,15 +17,11 @@ Component.register('fib-outbox-routing', {
             isLoading: false,
             saveLoading: false,
             targets: [],
-            routes: [],
+            destinationTypes: [],
             destinationRepository: null,
-            routeRepository: null,
             showTargetModal: false,
-            showRouteModal: false,
             targetDraft: this.createEmptyTargetDraft(),
-            routeDraft: this.createEmptyRouteDraft(),
             editingTargetId: null,
-            editingRouteId: null,
         };
     },
 
@@ -41,29 +35,10 @@ Component.register('fib-outbox-routing', {
             ];
         },
 
-        routeColumns() {
-            return [
-                { property: 'name', label: this.$tc('fib-outbox-bridge.routing.routes.columns.name'), primary: true },
-                { property: 'eventPattern', label: this.$tc('fib-outbox-bridge.routing.routes.columns.eventPattern') },
-                { property: 'priority', label: this.$tc('fib-outbox-bridge.routing.routes.columns.priority') },
-                { property: 'targetKeys', label: this.$tc('fib-outbox-bridge.routing.routes.columns.targetKeys') },
-                { property: 'isActive', label: this.$tc('fib-outbox-bridge.routing.routes.columns.isActive') },
-            ];
-        },
-
         targetTypeOptions() {
-            return [
-                { value: 'webhook', label: this.$tc('fib-outbox-bridge.routing.targets.types.webhook') },
-                { value: 'messenger', label: this.$tc('fib-outbox-bridge.routing.targets.types.messenger') },
-                { value: 'flow', label: this.$tc('fib-outbox-bridge.routing.targets.types.flow') },
-                { value: 'null', label: this.$tc('fib-outbox-bridge.routing.targets.types.null') },
-            ];
-        },
-
-        targetOptions() {
-            return this.targets.map((target) => ({
-                value: target.technicalName,
-                label: `${target.name} (${target.technicalName})`,
+            return this.destinationTypes.map((typeDefinition) => ({
+                value: typeDefinition.type,
+                label: typeDefinition.label,
             }));
         },
 
@@ -73,24 +48,33 @@ Component.register('fib-outbox-routing', {
                 : this.$tc('fib-outbox-bridge.routing.targets.modal.createTitle');
         },
 
-        routeModalTitle() {
-            return this.isEditingRoute
-                ? this.$tc('fib-outbox-bridge.routing.routes.modal.editTitle')
-                : this.$tc('fib-outbox-bridge.routing.routes.modal.createTitle');
-        },
-
         isEditingTarget() {
             return !!this.editingTargetId;
         },
 
-        isEditingRoute() {
-            return !!this.editingRouteId;
+        selectedTypeDefinition() {
+            return this.destinationTypes.find((typeDefinition) => typeDefinition.type === this.targetDraft.type) ?? null;
+        },
+
+        configFieldDefinitions() {
+            return this.selectedTypeDefinition?.configFields ?? [];
+        },
+    },
+
+    watch: {
+        'targetDraft.type': {
+            handler(newType, oldType) {
+                if (newType === oldType) {
+                    return;
+                }
+
+                this.targetDraft.config = this.normalizeConfigForType(newType, this.targetDraft.config);
+            },
         },
     },
 
     created() {
         this.destinationRepository = this.repositoryFactory.create('fib_outbox_destination');
-        this.routeRepository = this.repositoryFactory.create('fib_outbox_route');
         this.loadAll();
     },
 
@@ -99,21 +83,9 @@ Component.register('fib-outbox-routing', {
             return {
                 name: '',
                 technicalName: '',
-                type: 'webhook',
+                type: '',
                 isActive: true,
-                webhookUrl: '',
-                routingKey: '',
-                flowEventName: DEFAULT_FLOW_EVENT_NAME,
-            };
-        },
-
-        createEmptyRouteDraft() {
-            return {
-                name: '',
-                eventPattern: '*',
-                priority: 100,
-                isActive: true,
-                targetKeys: [],
+                config: {},
             };
         },
 
@@ -121,11 +93,35 @@ Component.register('fib-outbox-routing', {
             this.isLoading = true;
 
             return Promise.all([
+                this.loadDestinationTypes(),
                 this.loadTargets(),
-                this.loadRoutes(),
             ]).finally(() => {
                 this.isLoading = false;
             });
+        },
+
+        loadDestinationTypes() {
+            return this.fibOutboxActionService.getDestinationTypes()
+                .then((response) => {
+                    const payload = response?.data ?? response ?? {};
+                    const types = Array.isArray(payload)
+                        ? payload
+                        : (Array.isArray(payload?.data) ? payload.data : []);
+
+                    this.destinationTypes = types
+                        .filter((typeDefinition) => typeDefinition?.type && typeDefinition?.label)
+                        .map((typeDefinition) => ({
+                            type: typeDefinition.type,
+                            label: typeDefinition.label,
+                            configFields: Array.isArray(typeDefinition?.configFields) ? typeDefinition.configFields : [],
+                        }));
+                })
+                .catch(() => {
+                    this.destinationTypes = [];
+                    this.createNotificationError({
+                        message: this.$tc('fib-outbox-bridge.routing.notifications.loadTargetsError'),
+                    });
+                });
         },
 
         loadTargets() {
@@ -143,39 +139,22 @@ Component.register('fib-outbox-routing', {
                 });
         },
 
-        loadRoutes() {
-            const criteria = new Criteria(1, 500);
-            criteria.addSorting(Criteria.sort('priority', 'ASC'));
-
-            return this.routeRepository.search(criteria, Context.api)
-                .then((result) => {
-                    this.routes = result;
-                })
-                .catch(() => {
-                    this.createNotificationError({
-                        message: this.$tc('fib-outbox-bridge.routing.notifications.loadRoutesError'),
-                    });
-                });
-        },
-
         openCreateTargetModal() {
             this.editingTargetId = null;
             this.targetDraft = this.createEmptyTargetDraft();
+            this.targetDraft.type = this.destinationTypes[0]?.type ?? '';
+            this.targetDraft.config = this.normalizeConfigForType(this.targetDraft.type, {});
             this.showTargetModal = true;
         },
 
         openEditTargetModal(item) {
-            const config = item?.config ?? {};
-
             this.editingTargetId = item.id;
             this.targetDraft = {
                 name: item.name,
                 technicalName: item.technicalName,
                 type: item.type,
                 isActive: item.isActive,
-                webhookUrl: config?.url ?? '',
-                routingKey: config?.routingKey ?? '',
-                flowEventName: config?.flowEventName ?? DEFAULT_FLOW_EVENT_NAME,
+                config: this.normalizeConfigForType(item.type, item?.config ?? {}),
             };
             this.showTargetModal = true;
         },
@@ -187,7 +166,7 @@ Component.register('fib-outbox-routing', {
         },
 
         saveTarget() {
-            if (!this.targetDraft.name || !this.targetDraft.technicalName) {
+            if (!this.targetDraft.name || !this.targetDraft.technicalName || !this.targetDraft.type) {
                 this.createNotificationError({
                     message: this.$tc('fib-outbox-bridge.routing.notifications.targetValidationError'),
                 });
@@ -199,11 +178,15 @@ Component.register('fib-outbox-routing', {
                 ? this.targets.find((item) => item.id === this.editingTargetId)
                 : this.destinationRepository.create(Context.api);
 
+            if (!entity) {
+                return Promise.resolve();
+            }
+
             entity.name = this.targetDraft.name;
             entity.technicalName = this.targetDraft.technicalName;
             entity.type = this.targetDraft.type;
             entity.isActive = this.targetDraft.isActive;
-            entity.config = this.buildTargetConfig();
+            entity.config = this.normalizeConfigForType(this.targetDraft.type, this.targetDraft.config);
 
             this.saveLoading = true;
 
@@ -226,28 +209,6 @@ Component.register('fib-outbox-routing', {
                 });
         },
 
-        buildTargetConfig() {
-            if (this.targetDraft.type === 'webhook') {
-                return {
-                    url: this.targetDraft.webhookUrl?.trim() ?? '',
-                };
-            }
-
-            if (this.targetDraft.type === 'messenger') {
-                return {
-                    routingKey: this.targetDraft.routingKey?.trim() ?? '',
-                };
-            }
-
-            if (this.targetDraft.type === 'flow') {
-                const flowEventName = this.targetDraft.flowEventName?.trim() || DEFAULT_FLOW_EVENT_NAME;
-
-                return { flowEventName };
-            }
-
-            return {};
-        },
-
         deleteTarget(item) {
             return this.destinationRepository.delete(item.id, Context.api)
                 .then(() => {
@@ -264,84 +225,32 @@ Component.register('fib-outbox-routing', {
                 });
         },
 
-        openCreateRouteModal() {
-            this.editingRouteId = null;
-            this.routeDraft = this.createEmptyRouteDraft();
-            this.showRouteModal = true;
+        normalizeConfigForType(type, config) {
+            const normalized = {};
+            const typeDefinition = this.destinationTypes.find((item) => item.type === type);
+            const fields = typeDefinition?.configFields ?? [];
+
+            fields.forEach((field) => {
+                const fieldName = field?.name;
+                if (!fieldName) {
+                    return;
+                }
+
+                const valueFromConfig = config?.[fieldName];
+                const defaultValue = field?.default ?? this.defaultValueForField(field);
+
+                normalized[fieldName] = valueFromConfig ?? defaultValue;
+            });
+
+            return normalized;
         },
 
-        openEditRouteModal(item) {
-            this.editingRouteId = item.id;
-            this.routeDraft = {
-                name: item.name,
-                eventPattern: item.eventPattern,
-                priority: item.priority,
-                isActive: item.isActive,
-                targetKeys: item.targetKeys ?? [],
-            };
-            this.showRouteModal = true;
-        },
-
-        closeRouteModal() {
-            this.showRouteModal = false;
-            this.routeDraft = this.createEmptyRouteDraft();
-            this.editingRouteId = null;
-        },
-
-        saveRoute() {
-            if (!this.routeDraft.name || !this.routeDraft.eventPattern || (this.routeDraft.targetKeys ?? []).length === 0) {
-                this.createNotificationError({
-                    message: this.$tc('fib-outbox-bridge.routing.notifications.routeValidationError'),
-                });
-
-                return Promise.resolve();
+        defaultValueForField(field) {
+            if (field?.type === 'bool') {
+                return false;
             }
 
-            const entity = this.isEditingRoute
-                ? this.routes.find((item) => item.id === this.editingRouteId)
-                : this.routeRepository.create(Context.api);
-
-            entity.name = this.routeDraft.name;
-            entity.eventPattern = this.routeDraft.eventPattern;
-            entity.priority = this.routeDraft.priority;
-            entity.isActive = this.routeDraft.isActive;
-            entity.targetKeys = this.routeDraft.targetKeys;
-
-            this.saveLoading = true;
-
-            return this.routeRepository.save(entity, Context.api)
-                .then(() => {
-                    this.createNotificationSuccess({
-                        message: this.$tc('fib-outbox-bridge.routing.notifications.routeSavedSuccess'),
-                    });
-                    this.closeRouteModal();
-
-                    return this.loadAll();
-                })
-                .catch(() => {
-                    this.createNotificationError({
-                        message: this.$tc('fib-outbox-bridge.routing.notifications.routeSaveError'),
-                    });
-                })
-                .finally(() => {
-                    this.saveLoading = false;
-                });
-        },
-
-        deleteRoute(item) {
-            return this.routeRepository.delete(item.id, Context.api)
-                .then(() => {
-                    this.createNotificationSuccess({
-                        message: this.$tc('fib-outbox-bridge.routing.notifications.routeDeleteSuccess'),
-                    });
-
-                    return this.loadAll();
-                })
-                .catch(() => {
-                    this.createNotificationError({
-                        message: this.$tc('fib-outbox-bridge.routing.notifications.routeDeleteError'),
-                    });
-                });
+            return '';
         },
     },
 });

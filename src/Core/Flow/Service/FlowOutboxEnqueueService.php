@@ -63,6 +63,7 @@ class FlowOutboxEnqueueService
         $config = $flow->getConfig();
         $destinationId = trim((string) ($config['destinationId'] ?? ''));
         $destinationType = strtolower(trim((string) ($config['destinationType'] ?? '')));
+        $sourceEventName = trim($flow->getName());
 
         if ($destinationId === '') {
             return false;
@@ -81,7 +82,8 @@ class FlowOutboxEnqueueService
 
         $meta = [
             'source' => $actionName,
-            'flowName' => $flow->getName(),
+            'flowName' => $sourceEventName,
+            'sourceEventName' => $sourceEventName,
             'flowSequenceId' => $this->resolveSequenceId($flow),
             'destinationType' => $destination['type'],
             'destinationId' => $destination['id'],
@@ -90,7 +92,8 @@ class FlowOutboxEnqueueService
         ];
 
         $payload = [
-            'flowName' => $flow->getName(),
+            'flowName' => $sourceEventName,
+            'sourceEventName' => $sourceEventName,
             'actionName' => $actionName,
             'destinationType' => $destination['type'],
             'destinationId' => $destination['id'],
@@ -100,7 +103,7 @@ class FlowOutboxEnqueueService
         ];
 
         $event = DomainEvent::create(
-            'fib.outbox.enqueue.destination.v1',
+            $sourceEventName !== '' ? $sourceEventName : 'fib.outbox.enqueue.destination.v1',
             $aggregateType,
             $aggregateId,
             is_array($payload) ? $payload : [],

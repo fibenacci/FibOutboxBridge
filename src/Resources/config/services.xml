@@ -23,6 +23,27 @@
         </service>
 
         <service id="Fib\OutboxBridge\Core\Outbox\Publisher\OutboxTargetPublisher"/>
+        <service id="Fib\OutboxBridge\Core\Outbox\Destination\OutboxDestinationStrategyRegistry">
+            <argument type="tagged_iterator" tag="fib_outbox.destination_strategy"/>
+        </service>
+        <service id="Fib\OutboxBridge\Core\Outbox\Destination\Strategy\WebhookOutboxDestinationStrategy">
+            <tag name="fib_outbox.destination_strategy"/>
+        </service>
+        <service id="Fib\OutboxBridge\Core\Outbox\Destination\Strategy\MessengerOutboxDestinationStrategy">
+            <tag name="fib_outbox.destination_strategy"/>
+        </service>
+        <service id="Fib\OutboxBridge\Core\Outbox\Destination\Strategy\FlowOutboxDestinationStrategy">
+            <tag name="fib_outbox.destination_strategy"/>
+        </service>
+        <service id="Fib\OutboxBridge\Core\Outbox\Destination\Strategy\SftpOutboxDestinationStrategy">
+            <tag name="fib_outbox.destination_strategy"/>
+        </service>
+        <service id="Fib\OutboxBridge\Core\Outbox\Destination\Strategy\CentrifugoOutboxDestinationStrategy">
+            <tag name="fib_outbox.destination_strategy"/>
+        </service>
+        <service id="Fib\OutboxBridge\Core\Outbox\Destination\Strategy\NullOutboxDestinationStrategy">
+            <tag name="fib_outbox.destination_strategy"/>
+        </service>
         <service id="Fib\OutboxBridge\Core\Flow\Service\OutboxDestinationSelector"/>
         <service id="Fib\OutboxBridge\Core\Flow\Service\FlowOutboxEnqueueService"/>
         <service id="Fib\OutboxBridge\Core\Flow\Action\EnqueueDestinationFlowAction">

@@ -5,7 +5,7 @@ const { Criteria } = Shopware.Data;
 export default {
     template,
 
-    inject: ['repositoryFactory'],
+    inject: ['repositoryFactory', 'fibOutboxActionService'],
 
     props: {
         sequence: {
@@ -23,6 +23,7 @@ export default {
                 destinationLabel: null,
                 destinationTechnicalName: null,
             },
+            destinationTypes: [],
             destinations: [],
             isLoading: false,
             error: {
@@ -34,11 +35,10 @@ export default {
 
     computed: {
         destinationTypeOptions() {
-            return [
-                { value: 'webhook', label: this.$tc('fib-outbox-bridge.flow.modal.destinationTypes.webhook') },
-                { value: 'messenger', label: this.$tc('fib-outbox-bridge.flow.modal.destinationTypes.messenger') },
-                { value: 'flow', label: this.$tc('fib-outbox-bridge.flow.modal.destinationTypes.flow') },
-            ];
+            return this.destinationTypes.map((typeDefinition) => ({
+                value: typeDefinition.type,
+                label: typeDefinition.label,
+            }));
         },
 
         destinationOptions() {
@@ -70,7 +70,8 @@ export default {
 
     created() {
         this.hydrateConfig();
-        this.loadDestinations();
+        this.loadDestinationTypes()
+            .then(() => this.loadDestinations());
     },
 
     methods: {
@@ -83,6 +84,33 @@ export default {
                 destinationLabel: existingConfig?.destinationLabel ?? null,
                 destinationTechnicalName: existingConfig?.destinationTechnicalName ?? null,
             };
+        },
+
+        loadDestinationTypes() {
+            return this.fibOutboxActionService.getDestinationTypes()
+                .then((response) => {
+                    const payload = response?.data ?? response ?? {};
+                    const types = Array.isArray(payload)
+                        ? payload
+                        : (Array.isArray(payload?.data) ? payload.data : []);
+
+                    this.destinationTypes = types
+                        .filter((typeDefinition) => typeDefinition?.type && typeDefinition?.label)
+                        .map((typeDefinition) => ({
+                            type: typeDefinition.type,
+                            label: typeDefinition.label,
+                        }));
+
+                    if (this.destinationTypes.length > 0) {
+                        const exists = this.destinationTypes.some((typeDefinition) => typeDefinition.type === this.config.destinationType);
+                        if (!exists) {
+                            this.config.destinationType = this.destinationTypes[0].type;
+                        }
+                    }
+                })
+                .catch(() => {
+                    this.destinationTypes = [];
+                });
         },
 
         loadDestinations() {
