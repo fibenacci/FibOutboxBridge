@@ -256,8 +256,8 @@ class OutboxRepository
         $eventIds    = [];
 
         foreach ($rows as $row) {
-            $deliveryId = (string) ($row['delivery_id'] ?? '');
-            $eventId    = (string) ($row['event_id'] ?? '');
+            $deliveryId = (string) $row['delivery_id'];
+            $eventId    = (string) $row['event_id'];
 
             if ($deliveryId === '' || $eventId === '') {
                 continue;
@@ -395,9 +395,9 @@ class OutboxRepository
     private function insertDeliveries(string $eventId, array $targets, \DateTimeImmutable $now): void
     {
         foreach ($targets as $target) {
-            $destinationId = (string) ($target['id'] ?? '');
-            $targetKey     = (string) ($target['key'] ?? '');
-            $targetType    = (string) ($target['type'] ?? '');
+            $destinationId = (string) $target['id'];
+            $targetKey     = (string) $target['key'];
+            $targetType    = (string) $target['type'];
             $targetConfig  = $target['config'] ?? [];
 
             if ($targetConfig !== (array) $targetConfig) {

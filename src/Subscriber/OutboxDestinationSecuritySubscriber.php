@@ -73,7 +73,7 @@ class OutboxDestinationSecuritySubscriber implements EventSubscriberInterface
             }
 
             $decodedPrimaryKey = $command->getDecodedPrimaryKey();
-            $destinationId     = (string) ($decodedPrimaryKey['id'] ?? '');
+            $destinationId     = (string) $decodedPrimaryKey['id'];
 
             if ($destinationId === '' || !Uuid::isValid($destinationId)) {
                 continue;

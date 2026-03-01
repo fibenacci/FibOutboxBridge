@@ -46,8 +46,8 @@ class OutboxTargetPublisher
         }
 
         $context = [
-            'id'         => (string) ($target['id'] ?? ''),
-            'key'        => (string) ($target['key'] ?? ''),
+            'id'         => (string) $target['id'],
+            'key'        => (string) $target['key'],
             'deliveryId' => $deliveryId,
         ];
 

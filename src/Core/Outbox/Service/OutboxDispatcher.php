@@ -49,8 +49,8 @@ class OutboxDispatcher
         ];
 
         foreach ($rows as $row) {
-            $deliveryId = (string) ($row['delivery_id'] ?? '');
-            $eventId    = (string) ($row['event_id'] ?? '');
+            $deliveryId = (string) $row['delivery_id'];
+            $eventId    = (string) $row['event_id'];
 
             if ($deliveryId === '' || $eventId === '') {
                 continue;
@@ -121,9 +121,9 @@ class OutboxDispatcher
             $config        = $decodedConfig === (array) $decodedConfig ? $decodedConfig : [];
         }
 
-        $destinationId = (string) ($row['destination_id'] ?? '');
-        $targetKey     = (string) ($row['target_key'] ?? '');
-        $targetType    = (string) ($row['target_type'] ?? '');
+        $destinationId = (string) $row['destination_id'];
+        $targetKey     = (string) $row['target_key'];
+        $targetType    = (string) $row['target_type'];
 
         return [
             'id'     => $destinationId === '' ? $targetKey : $destinationId,
@@ -147,9 +147,9 @@ class OutboxDispatcher
             Context::createDefaultContext(),
             $event,
             $deliveryId,
-            (string) ($target['id'] ?? ''),
-            (string) ($target['key'] ?? ''),
-            (string) ($target['type'] ?? ''),
+            (string) $target['id'],
+            (string) $target['key'],
+            (string) $target['type'],
             ($target['config'] ?? null) === (array) ($target['config'] ?? null) ? $target['config'] : [],
             $attempt,
             'dead',

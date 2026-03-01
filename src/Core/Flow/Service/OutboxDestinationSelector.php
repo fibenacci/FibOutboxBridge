@@ -49,9 +49,9 @@ class OutboxDestinationSelector
         $destinations = [];
 
         foreach ($rows as $row) {
-            $id              = (string) ($row['id'] ?? '');
-            $key             = (string) ($row['technical_name'] ?? '');
-            $destinationType = (string) ($row['type'] ?? '');
+            $id              = (string) $row['id'];
+            $key             = (string) $row['technical_name'];
+            $destinationType = (string) $row['type'];
             $config          = $this->decodeJsonConfig($row, 'config');
 
             if ($id === '' || $key === '' || $destinationType === '') {
@@ -104,13 +104,13 @@ class OutboxDestinationSelector
             ]);
         }
 
-        if (empty($row) || $row !== (array) $row) {
+        if (empty($row)) {
             return null;
         }
 
-        $id     = (string) ($row['id'] ?? '');
-        $key    = (string) ($row['technical_name'] ?? '');
-        $type   = (string) ($row['type'] ?? '');
+        $id     = (string) $row['id'];
+        $key    = (string) $row['technical_name'];
+        $type   = (string) $row['type'];
         $config = $this->decodeJsonConfig($row, 'config');
 
         if ($id === '' || $key === '' || $type === '') {

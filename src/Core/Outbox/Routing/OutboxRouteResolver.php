@@ -126,9 +126,9 @@ class OutboxRouteResolver
         $targets = [];
 
         foreach ($rows as $row) {
-            $id            = (string) ($row['id'] ?? '');
-            $technicalName = (string) ($row['technical_name'] ?? '');
-            $type          = (string) ($row['type'] ?? '');
+            $id            = (string) $row['id'];
+            $technicalName = (string) $row['technical_name'];
+            $type          = (string) $row['type'];
 
             if ($id === '' || $technicalName === '' || $type === '') {
                 continue;
@@ -161,7 +161,7 @@ class OutboxRouteResolver
         $routes = [];
 
         foreach ($rows as $row) {
-            $eventPattern = (string) ($row['event_pattern'] ?? '');
+            $eventPattern = (string) $row['event_pattern'];
 
             if ($eventPattern === '') {
                 continue;

@@ -106,8 +106,8 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
             }
         }
 
-        $password   = $config['password'] ?? '';
-        $privateKey = $config['privateKey'] ?? '';
+        $password   = $config['password'];
+        $privateKey = $config['privateKey'];
 
         if (empty($password) && empty($privateKey)) {
             throw new \RuntimeException('SFTP destination requires either "password/passwordRef" or "privateKey/privateKeyRef" config.');
@@ -119,13 +119,13 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
         $this->validateConfig($config);
 
         $host            = (string) $config['host'];
-        $port            = (int) ($config['port'] ?? 22);
+        $port            = (int) $config['port'];
         $username        = (string) $config['username'];
-        $password        = (string) ($config['password'] ?? '');
-        $privateKey      = (string) ($config['privateKey'] ?? '');
-        $passphrase      = (string) ($config['passphrase'] ?? '');
+        $password        = (string) $config['password'];
+        $privateKey      = (string) $config['privateKey'];
+        $passphrase      = (string) $config['passphrase'];
         $remoteDir       = (string) $config['remoteDir'];
-        $fileNamePattern = (string) ($config['fileNamePattern'] ?? '{eventId}.json');
+        $fileNamePattern = (string) $config['fileNamePattern'];
         $fileName        = $this->resolveFileName($fileNamePattern, $event);
 
         $payload = json_encode([
@@ -138,9 +138,9 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
         $connectionProvider = new SftpConnectionProvider(
             $host,
             $username,
-            $password !== '' ? $password : null,
-            $privateKey !== '' ? $privateKey : null,
-            $passphrase !== '' ? $passphrase : null,
+            $password ?: null,
+            $privateKey ?: null,
+            $passphrase ?: null,
             $port
         );
 

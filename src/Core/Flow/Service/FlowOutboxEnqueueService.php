@@ -69,12 +69,12 @@ class FlowOutboxEnqueueService
         }
 
         $destinationId   = (string) $config['destinationId'];
-        $destinationType = (string) ($config['destinationType'] ?? '');
+        $destinationType = (string) $config['destinationType'];
         $sourceEventName = $flow->getName();
 
         $destination = $this->destinationSelector->getActiveDestinationById(
             $destinationId,
-            $destinationType !== '' ? $destinationType : null
+            $destinationType ?: null
         );
 
         if ($destination === null) {
