@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Security\Resolver;
 
@@ -14,11 +16,13 @@ class EnvCredentialReferenceResolver implements CredentialReferenceResolverInter
     public function resolve(string $reference): string
     {
         $envName = substr($reference, 4);
+
         if ($envName === '') {
             throw new \RuntimeException('Credential env reference must not be empty.');
         }
 
         $value = getenv($envName);
+
         if (empty($value)) {
             throw new \RuntimeException(sprintf('Credential env reference "%s" is missing or empty.', $envName));
         }

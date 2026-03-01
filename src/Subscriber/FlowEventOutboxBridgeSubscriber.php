@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Subscriber;
 
@@ -15,7 +17,7 @@ class FlowEventOutboxBridgeSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly OutboxRepository $repository,
-        private readonly OutboxRouteResolver $routeResolver
+        private readonly OutboxRouteResolver $routeResolver,
     ) {
     }
 
@@ -28,7 +30,7 @@ class FlowEventOutboxBridgeSubscriber implements EventSubscriberInterface
 
     public function onFlowLog(FlowLogEvent $event): void
     {
-        $sourceEvent = $event->getEvent();
+        $sourceEvent     = $event->getEvent();
         $sourceEventName = $sourceEvent->getName();
 
         if ($sourceEventName === '') {
@@ -46,14 +48,14 @@ class FlowEventOutboxBridgeSubscriber implements EventSubscriberInterface
         [$aggregateType, $aggregateId, $identifiers] = $this->resolveAggregate($sourceEvent);
 
         $payload = [
-            'flowEventName' => $sourceEventName,
+            'flowEventName'  => $sourceEventName,
             'flowEventClass' => $sourceEvent::class,
-            'identifiers' => $identifiers,
-            'scalarValues' => $this->extractScalarValues($sourceEvent),
+            'identifiers'    => $identifiers,
+            'scalarValues'   => $this->extractScalarValues($sourceEvent),
         ];
 
         $meta = [
-            'source' => FlowLogEvent::NAME,
+            'source'           => FlowLogEvent::NAME,
             'contextVersionId' => $sourceEvent->getContext()->getVersionId(),
         ];
 
@@ -83,11 +85,13 @@ class FlowEventOutboxBridgeSubscriber implements EventSubscriberInterface
 
         foreach ($candidates as $candidate) {
             $method = $candidate['method'];
+
             if (!method_exists($event, $method)) {
                 continue;
             }
 
             $id = $event->{$method}();
+
             if (empty($id)) {
                 continue;
             }
@@ -109,7 +113,7 @@ class FlowEventOutboxBridgeSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @return array<string, scalar|array<mixed>|null>
+     * @return array<string, null|array<mixed>|scalar>
      */
     private function extractScalarValues(FlowEventAware $event): array
     {

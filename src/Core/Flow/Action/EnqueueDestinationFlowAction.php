@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Flow\Action;
 
@@ -11,7 +13,7 @@ class EnqueueDestinationFlowAction extends FlowAction
 {
     public function __construct(
         private readonly FlowOutboxEnqueueService $enqueueService,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -31,6 +33,7 @@ class EnqueueDestinationFlowAction extends FlowAction
     public function handleFlow(StorableFlow $flow): void
     {
         $wasEnqueued = $this->enqueueService->enqueueForConfiguredDestination($flow, self::getName());
+
         if ($wasEnqueued) {
             return;
         }
@@ -38,10 +41,10 @@ class EnqueueDestinationFlowAction extends FlowAction
         $config = $flow->getConfig();
 
         $this->logger->warning('Flow action could not enqueue outbox delivery because destination configuration is invalid.', [
-            'actionName' => self::getName(),
-            'flowName' => $flow->getName(),
+            'actionName'      => self::getName(),
+            'flowName'        => $flow->getName(),
             'destinationType' => $config['destinationType'] ?? null,
-            'destinationId' => $config['destinationId'] ?? null,
+            'destinationId'   => $config['destinationId'] ?? null,
         ]);
     }
 }

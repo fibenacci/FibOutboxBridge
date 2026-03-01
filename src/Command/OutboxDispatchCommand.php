@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Command;
 
@@ -16,7 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class OutboxDispatchCommand extends Command
 {
     public function __construct(
-        private readonly OutboxDispatcher $dispatcher
+        private readonly OutboxDispatcher $dispatcher,
     ) {
         parent::__construct();
     }
@@ -42,7 +44,7 @@ class OutboxDispatchCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $limit = max(1, (int) $input->getOption('limit'));
+        $limit  = (int) $input->getOption('limit');
         $worker = (string) $input->getOption('worker');
 
         $result = $this->dispatcher->dispatchBatch($limit, $worker ?: null);

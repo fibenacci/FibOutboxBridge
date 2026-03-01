@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\ScheduledTask;
 
@@ -16,7 +18,7 @@ class DispatchOutboxTaskHandler extends ScheduledTaskHandler
         EntityRepository $scheduledTaskRepository,
         LoggerInterface $exceptionLogger,
         private readonly OutboxDispatcher $dispatcher,
-        private readonly OutboxSettings $settings
+        private readonly OutboxSettings $settings,
     ) {
         parent::__construct($scheduledTaskRepository, $exceptionLogger);
     }

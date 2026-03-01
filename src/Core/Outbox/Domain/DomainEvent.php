@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Domain;
 
@@ -8,8 +10,8 @@ use Shopware\Core\Framework\Uuid\Uuid;
 class DomainEvent
 {
     /**
-     * @param array<string, mixed> $payload
-     * @param array<string, mixed>|null $meta
+     * @param array<string, mixed>      $payload
+     * @param null|array<string, mixed> $meta
      */
     public function __construct(
         private readonly string $id,
@@ -18,13 +20,13 @@ class DomainEvent
         private readonly string $aggregateId,
         private readonly \DateTimeImmutable $occurredAt,
         private readonly array $payload,
-        private readonly ?array $meta = null
+        private readonly ?array $meta = null,
     ) {
     }
 
     /**
-     * @param array<string, mixed> $payload
-     * @param array<string, mixed>|null $meta
+     * @param array<string, mixed>      $payload
+     * @param null|array<string, mixed> $meta
      */
     public static function create(
         string $eventName,
@@ -33,7 +35,7 @@ class DomainEvent
         array $payload,
         ?array $meta = null,
         ?string $eventId = null,
-        ?\DateTimeImmutable $occurredAt = null
+        ?\DateTimeImmutable $occurredAt = null,
     ): self {
         return new self(
             $eventId ?? Uuid::randomHex(),
@@ -52,8 +54,8 @@ class DomainEvent
     public static function fromOutboxRow(array $row): self
     {
         $occurredAt = new \DateTimeImmutable((string) $row['occurred_at']);
-        $payload = json_decode((string) $row['payload'], true);
-        $meta = json_decode((string) ($row['meta'] ?? 'null'), true);
+        $payload    = json_decode((string) $row['payload'], true);
+        $meta       = json_decode((string) ($row['meta'] ?? 'null'), true);
 
         return new self(
             (string) $row['id'],
@@ -100,7 +102,7 @@ class DomainEvent
     }
 
     /**
-     * @return array<string, mixed>|null
+     * @return null|array<string, mixed>
      */
     public function getMeta(): ?array
     {
@@ -113,13 +115,13 @@ class DomainEvent
     public function toArray(): array
     {
         return [
-            'eventId' => $this->id,
-            'eventName' => $this->eventName,
+            'eventId'       => $this->id,
+            'eventName'     => $this->eventName,
             'aggregateType' => $this->aggregateType,
-            'aggregateId' => $this->aggregateId,
-            'occurredAt' => $this->occurredAt->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-            'payload' => $this->payload,
-            'meta' => $this->meta,
+            'aggregateId'   => $this->aggregateId,
+            'occurredAt'    => $this->occurredAt->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+            'payload'       => $this->payload,
+            'meta'          => $this->meta,
         ];
     }
 }

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Security\Resolver;
 
@@ -24,6 +26,7 @@ class FileCredentialReferenceResolver implements CredentialReferenceResolverInte
     public function resolve(string $reference): string
     {
         $rawPath = substr($reference, 5);
+
         if ($rawPath === '') {
             throw new \RuntimeException('Credential file reference must not be empty.');
         }

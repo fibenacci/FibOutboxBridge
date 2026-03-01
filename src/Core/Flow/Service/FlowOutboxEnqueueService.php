@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Flow\Service;
 
@@ -11,14 +13,14 @@ class FlowOutboxEnqueueService
 {
     public function __construct(
         private readonly OutboxDestinationSelector $destinationSelector,
-        private readonly OutboxRepository $outboxRepository
+        private readonly OutboxRepository $outboxRepository,
     ) {
     }
 
     public function enqueueForDestinationType(
         StorableFlow $flow,
         string $destinationType,
-        string $actionName
+        string $actionName,
     ): int {
         $destinations = $this->destinationSelector->getActiveDestinationsByType($destinationType);
 
@@ -29,20 +31,20 @@ class FlowOutboxEnqueueService
         [$aggregateType, $aggregateId] = $this->resolveAggregate($flow);
 
         $meta = [
-            'source' => $actionName,
-            'flowName' => $flow->getName(),
-            'flowSequenceId' => $this->resolveSequenceId($flow),
-            'destinationType' => $destinationType,
+            'source'           => $actionName,
+            'flowName'         => $flow->getName(),
+            'flowSequenceId'   => $this->resolveSequenceId($flow),
+            'destinationType'  => $destinationType,
             'destinationCount' => count($destinations),
             'contextVersionId' => $flow->getContext()->getVersionId(),
         ];
 
         $payload = [
-            'flowName' => $flow->getName(),
-            'actionName' => $actionName,
+            'flowName'        => $flow->getName(),
+            'actionName'      => $actionName,
             'destinationType' => $destinationType,
-            'store' => $this->normalizeValue($flow->stored()),
-            'data' => $this->normalizeValue($flow->data()),
+            'store'           => $this->normalizeValue($flow->stored()),
+            'data'            => $this->normalizeValue($flow->data()),
         ];
 
         $event = DomainEvent::create(
@@ -61,11 +63,12 @@ class FlowOutboxEnqueueService
     public function enqueueForConfiguredDestination(StorableFlow $flow, string $actionName): bool
     {
         $config = $flow->getConfig();
+
         if (empty($config['destinationId'])) {
             return false;
         }
 
-        $destinationId = (string) $config['destinationId'];
+        $destinationId   = (string) $config['destinationId'];
         $destinationType = (string) ($config['destinationType'] ?? '');
         $sourceEventName = $flow->getName();
 
@@ -81,25 +84,25 @@ class FlowOutboxEnqueueService
         [$aggregateType, $aggregateId] = $this->resolveAggregate($flow);
 
         $meta = [
-            'source' => $actionName,
-            'flowName' => $sourceEventName,
-            'sourceEventName' => $sourceEventName,
-            'flowSequenceId' => $this->resolveSequenceId($flow),
-            'destinationType' => $destination['type'],
-            'destinationId' => $destination['id'],
-            'destinationKey' => $destination['key'],
+            'source'           => $actionName,
+            'flowName'         => $sourceEventName,
+            'sourceEventName'  => $sourceEventName,
+            'flowSequenceId'   => $this->resolveSequenceId($flow),
+            'destinationType'  => $destination['type'],
+            'destinationId'    => $destination['id'],
+            'destinationKey'   => $destination['key'],
             'contextVersionId' => $flow->getContext()->getVersionId(),
         ];
 
         $payload = [
-            'flowName' => $sourceEventName,
+            'flowName'        => $sourceEventName,
             'sourceEventName' => $sourceEventName,
-            'actionName' => $actionName,
+            'actionName'      => $actionName,
             'destinationType' => $destination['type'],
-            'destinationId' => $destination['id'],
-            'destinationKey' => $destination['key'],
-            'store' => $this->normalizeValue($flow->stored()),
-            'data' => $this->normalizeValue($flow->data()),
+            'destinationId'   => $destination['id'],
+            'destinationKey'  => $destination['key'],
+            'store'           => $this->normalizeValue($flow->stored()),
+            'data'            => $this->normalizeValue($flow->data()),
         ];
 
         $event = DomainEvent::create(
@@ -121,10 +124,10 @@ class FlowOutboxEnqueueService
     private function resolveAggregate(StorableFlow $flow): array
     {
         $mapping = [
-            'orderId' => 'order',
-            'customerId' => 'customer',
-            'productId' => 'product',
-            'promotionId' => 'promotion',
+            'orderId'        => 'order',
+            'customerId'     => 'customer',
+            'productId'      => 'product',
+            'promotionId'    => 'promotion',
             'salesChannelId' => 'sales_channel',
         ];
 
@@ -139,6 +142,7 @@ class FlowOutboxEnqueueService
         }
 
         $sequenceId = $this->resolveSequenceId($flow);
+
         if ($sequenceId !== null) {
             return ['flow_sequence', $sequenceId];
         }

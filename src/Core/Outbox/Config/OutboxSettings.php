@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Config;
 
@@ -9,7 +11,7 @@ class OutboxSettings
     private const CONFIG_PREFIX = 'FibOutboxBridge.config.';
 
     public function __construct(
-        private readonly SystemConfigService $systemConfigService
+        private readonly SystemConfigService $systemConfigService,
     ) {
     }
 

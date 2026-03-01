@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Destination\Strategy;
 
@@ -9,7 +11,7 @@ use Psr\Log\LoggerInterface;
 class NullOutboxDestinationStrategy implements OutboxDestinationStrategyInterface
 {
     public function __construct(
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -35,11 +37,11 @@ class NullOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
     public function publish(DomainEvent $event, array $context, array $config): void
     {
         $this->logger->info('Outbox event dropped by null destination.', [
-            'eventId' => $event->getId(),
-            'eventName' => $event->getEventName(),
-            'destinationId' => $context['id'],
+            'eventId'        => $event->getId(),
+            'eventName'      => $event->getEventName(),
+            'destinationId'  => $context['id'],
             'destinationKey' => $context['key'],
-            'deliveryId' => $context['deliveryId'],
+            'deliveryId'     => $context['deliveryId'],
         ]);
     }
 }

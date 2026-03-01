@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Routing;
 
@@ -8,7 +10,7 @@ use Fib\OutboxBridge\Core\Outbox\Flow\OutboxFlowForwardedEvent;
 class OutboxRouteResolver
 {
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
     ) {
     }
 
@@ -19,7 +21,7 @@ class OutboxRouteResolver
     {
         try {
             $targetsByTechnicalName = $this->loadActiveDestinations();
-            $routes = $this->loadActiveRoutes();
+            $routes                 = $this->loadActiveRoutes();
         } catch (\Throwable) {
             return [];
         }
@@ -66,21 +68,21 @@ class OutboxRouteResolver
 
         try {
             $rows = $this->connection->fetchAllAssociative(<<<SQL
-                SELECT `config`
-                FROM `fib_outbox_destination`
-                WHERE `is_active` = 1
-                  AND `type` = :type
-            SQL, [
+                    SELECT `config`
+                    FROM `fib_outbox_destination`
+                    WHERE `is_active` = 1
+                      AND `type` = :type
+                SQL, [
                 'type' => 'flow',
             ]);
         } catch (\Throwable) {
             try {
                 $rows = $this->connection->fetchAllAssociative(<<<SQL
-                    SELECT `config`
-                    FROM `fib_outbox_target`
-                    WHERE `is_active` = 1
-                      AND `type` = :type
-                SQL, [
+                        SELECT `config`
+                        FROM `fib_outbox_target`
+                        WHERE `is_active` = 1
+                          AND `type` = :type
+                    SQL, [
                     'type' => 'flow',
                 ]);
             } catch (\Throwable) {
@@ -89,8 +91,9 @@ class OutboxRouteResolver
         }
 
         foreach ($rows as $row) {
-            $config = $this->decodeJsonConfig($row, 'config');
+            $config        = $this->decodeJsonConfig($row, 'config');
             $flowEventName = OutboxFlowForwardedEvent::DEFAULT_EVENT_NAME;
+
             if (!empty($config['flowEventName'])) {
                 $flowEventName = (string) $config['flowEventName'];
             }
@@ -108,24 +111,24 @@ class OutboxRouteResolver
     {
         try {
             $rows = $this->connection->fetchAllAssociative(<<<SQL
-                SELECT `id`, `technical_name`, `type`, `config`
-                FROM `fib_outbox_destination`
-                WHERE `is_active` = 1
-            SQL);
+                    SELECT `id`, `technical_name`, `type`, `config`
+                    FROM `fib_outbox_destination`
+                    WHERE `is_active` = 1
+                SQL);
         } catch (\Throwable) {
             $rows = $this->connection->fetchAllAssociative(<<<SQL
-                SELECT `id`, `technical_name`, `type`, `config`
-                FROM `fib_outbox_target`
-                WHERE `is_active` = 1
-            SQL);
+                    SELECT `id`, `technical_name`, `type`, `config`
+                    FROM `fib_outbox_target`
+                    WHERE `is_active` = 1
+                SQL);
         }
 
         $targets = [];
 
         foreach ($rows as $row) {
-            $id = (string) ($row['id'] ?? '');
+            $id            = (string) ($row['id'] ?? '');
             $technicalName = (string) ($row['technical_name'] ?? '');
-            $type = (string) ($row['type'] ?? '');
+            $type          = (string) ($row['type'] ?? '');
 
             if ($id === '' || $technicalName === '' || $type === '') {
                 continue;
@@ -134,9 +137,9 @@ class OutboxRouteResolver
             $config = $this->decodeJsonConfig($row, 'config');
 
             $targets[$technicalName] = [
-                'id' => $id,
-                'key' => $technicalName,
-                'type' => $type,
+                'id'     => $id,
+                'key'    => $technicalName,
+                'type'   => $type,
                 'config' => $config,
             ];
         }
@@ -150,21 +153,22 @@ class OutboxRouteResolver
     private function loadActiveRoutes(): array
     {
         $rows = $this->connection->fetchAllAssociative(<<<SQL
-            SELECT `event_pattern`, `target_keys`, `priority`
-            FROM `fib_outbox_route`
-            WHERE `is_active` = 1
-        SQL);
+                SELECT `event_pattern`, `target_keys`, `priority`
+                FROM `fib_outbox_route`
+                WHERE `is_active` = 1
+            SQL);
 
         $routes = [];
 
         foreach ($rows as $row) {
             $eventPattern = (string) ($row['event_pattern'] ?? '');
+
             if ($eventPattern === '') {
                 continue;
             }
 
             $targetKeysRaw = $this->decodeJsonArray($row, 'target_keys');
-            $targetKeys = [];
+            $targetKeys    = [];
             foreach ($targetKeysRaw as $targetKey) {
                 if (empty($targetKey)) {
                     continue;
@@ -179,8 +183,8 @@ class OutboxRouteResolver
 
             $routes[] = [
                 'eventPattern' => $eventPattern,
-                'targetKeys' => array_values(array_unique($targetKeys)),
-                'priority' => (int) ($row['priority'] ?? 100),
+                'targetKeys'   => array_values(array_unique($targetKeys)),
+                'priority'     => (int) ($row['priority'] ?? 100),
             ];
         }
 

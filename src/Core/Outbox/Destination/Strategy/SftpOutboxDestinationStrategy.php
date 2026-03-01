@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Destination\Strategy;
 
@@ -25,70 +27,70 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
     {
         return [
             [
-                'name' => 'host',
-                'type' => 'text',
-                'label' => 'Host',
+                'name'     => 'host',
+                'type'     => 'text',
+                'label'    => 'Host',
                 'required' => true,
             ],
             [
-                'name' => 'port',
-                'type' => 'text',
-                'label' => 'Port',
+                'name'     => 'port',
+                'type'     => 'text',
+                'label'    => 'Port',
                 'required' => false,
-                'default' => '22',
+                'default'  => '22',
             ],
             [
-                'name' => 'username',
-                'type' => 'text',
-                'label' => 'Username',
+                'name'     => 'username',
+                'type'     => 'text',
+                'label'    => 'Username',
                 'required' => true,
             ],
             [
-                'name' => 'password',
-                'type' => 'text',
-                'label' => 'Password (direct, avoid in production)',
+                'name'     => 'password',
+                'type'     => 'text',
+                'label'    => 'Password (direct, avoid in production)',
                 'required' => false,
             ],
             [
-                'name' => 'passwordRef',
-                'type' => 'text',
-                'label' => 'Password reference (env:... or file:...)',
-                'required' => false,
+                'name'        => 'passwordRef',
+                'type'        => 'text',
+                'label'       => 'Password reference (env:... or file:...)',
+                'required'    => false,
                 'placeholder' => 'env:OUTBOX_SFTP_PASSWORD',
             ],
             [
-                'name' => 'privateKey',
-                'type' => 'text',
-                'label' => 'Private key path (direct, avoid in production)',
-                'required' => false,
+                'name'        => 'privateKey',
+                'type'        => 'text',
+                'label'       => 'Private key path (direct, avoid in production)',
+                'required'    => false,
                 'placeholder' => '/run/secrets/sftp_id_rsa',
             ],
             [
-                'name' => 'privateKeyRef',
-                'type' => 'text',
-                'label' => 'Private key reference (env:... or file:...)',
-                'required' => false,
+                'name'        => 'privateKeyRef',
+                'type'        => 'text',
+                'label'       => 'Private key reference (env:... or file:...)',
+                'required'    => false,
                 'placeholder' => 'file:/run/secrets/sftp_id_rsa',
             ],
             [
-                'name' => 'passphrase',
-                'type' => 'text',
-                'label' => 'Private key passphrase (optional)',
+                'name'     => 'passphrase',
+                'type'     => 'text',
+                'label'    => 'Private key passphrase (optional)',
                 'required' => false,
             ],
             [
-                'name' => 'remoteDir',
-                'type' => 'text',
-                'label' => 'Remote directory',
-                'required' => true,
+                'name'        => 'remoteDir',
+                'type'        => 'text',
+                'label'       => 'Remote directory',
+                'required'    => true,
                 'placeholder' => '/incoming/shopware',
             ],
             [
-                'name' => 'fileNamePattern',
-                'type' => 'text',
-                'label' => 'Filename pattern',
-                'required' => false,
-                'default' => '{eventId}.json',
+                'name'        => 'fileNamePattern',
+                'type'        => 'text',
+                'label'       => 'Filename pattern',
+                'required'    => false,
+                'default'     => '{eventId}.json',
                 'placeholder' => '{eventName}-{eventId}.json',
             ],
         ];
@@ -104,7 +106,7 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
             }
         }
 
-        $password = $config['password'] ?? '';
+        $password   = $config['password'] ?? '';
         $privateKey = $config['privateKey'] ?? '';
 
         if (empty($password) && empty($privateKey)) {
@@ -116,21 +118,21 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
     {
         $this->validateConfig($config);
 
-        $host = (string) $config['host'];
-        $port = (int) ($config['port'] ?? 22);
-        $username = (string) $config['username'];
-        $password = (string) ($config['password'] ?? '');
-        $privateKey = (string) ($config['privateKey'] ?? '');
-        $passphrase = (string) ($config['passphrase'] ?? '');
-        $remoteDir = (string) $config['remoteDir'];
+        $host            = (string) $config['host'];
+        $port            = (int) ($config['port'] ?? 22);
+        $username        = (string) $config['username'];
+        $password        = (string) ($config['password'] ?? '');
+        $privateKey      = (string) ($config['privateKey'] ?? '');
+        $passphrase      = (string) ($config['passphrase'] ?? '');
+        $remoteDir       = (string) $config['remoteDir'];
         $fileNamePattern = (string) ($config['fileNamePattern'] ?? '{eventId}.json');
-        $fileName = $this->resolveFileName($fileNamePattern, $event);
+        $fileName        = $this->resolveFileName($fileNamePattern, $event);
 
         $payload = json_encode([
-            'deliveryId' => $context['deliveryId'],
-            'destinationId' => $context['id'],
+            'deliveryId'     => $context['deliveryId'],
+            'destinationId'  => $context['id'],
             'destinationKey' => $context['key'],
-            'event' => $event->toArray(),
+            'event'          => $event->toArray(),
         ], \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR);
 
         $connectionProvider = new SftpConnectionProvider(
@@ -142,7 +144,7 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
             $port
         );
 
-        $adapter = new SftpAdapter($connectionProvider, $remoteDir);
+        $adapter    = new SftpAdapter($connectionProvider, $remoteDir);
         $filesystem = new Filesystem($adapter);
 
         try {
@@ -157,8 +159,8 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
         $effectivePattern = $pattern !== '' ? $pattern : '{eventId}.json';
 
         return strtr($effectivePattern, [
-            '{eventId}' => $event->getId(),
-            '{eventName}' => str_replace('.', '_', $event->getEventName()),
+            '{eventId}'     => $event->getId(),
+            '{eventName}'   => str_replace('.', '_', $event->getEventName()),
             '{aggregateId}' => $event->getAggregateId(),
         ]);
     }

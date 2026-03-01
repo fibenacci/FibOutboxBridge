@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Command;
 
@@ -15,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class OutboxResetStuckCommand extends Command
 {
     public function __construct(
-        private readonly OutboxRepository $repository
+        private readonly OutboxRepository $repository,
     ) {
         parent::__construct();
     }

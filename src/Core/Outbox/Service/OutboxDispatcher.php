@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Service;
 
@@ -18,7 +20,7 @@ class OutboxDispatcher
         private readonly OutboxTargetPublisher $targetPublisher,
         private readonly OutboxSettings $settings,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -28,7 +30,7 @@ class OutboxDispatcher
     public function dispatchBatch(?int $limit = null, ?string $workerId = null): array
     {
         $batchLimit = $limit ?? $this->settings->getDispatchBatchSize();
-        $worker = $workerId;
+        $worker     = $workerId;
 
         if (empty($worker)) {
             $worker = sprintf('outbox-%s', bin2hex(random_bytes(6)));
@@ -39,23 +41,23 @@ class OutboxDispatcher
         $rows = $this->repository->claimDeliveryBatch($batchLimit, $worker, $this->settings->getLockSeconds());
 
         $result = [
-            'claimed' => count($rows),
+            'claimed'   => count($rows),
             'published' => 0,
-            'retried' => 0,
-            'dead' => 0,
-            'errors' => 0,
+            'retried'   => 0,
+            'dead'      => 0,
+            'errors'    => 0,
         ];
 
         foreach ($rows as $row) {
             $deliveryId = (string) ($row['delivery_id'] ?? '');
-            $eventId = (string) ($row['event_id'] ?? '');
+            $eventId    = (string) ($row['event_id'] ?? '');
 
             if ($deliveryId === '' || $eventId === '') {
                 continue;
             }
 
             $target = $this->buildTargetFromRow($row);
-            $event = DomainEvent::fromOutboxRow($row);
+            $event  = DomainEvent::fromOutboxRow($row);
 
             try {
                 $this->targetPublisher->publish($event, $target, [
@@ -65,7 +67,7 @@ class OutboxDispatcher
                 ++$result['published'];
             } catch (\Throwable $exception) {
                 ++$result['errors'];
-                $attempts = ((int) ($row['delivery_attempts'] ?? 0)) + 1;
+                $attempts     = ((int) ($row['delivery_attempts'] ?? 0)) + 1;
                 $errorMessage = $exception->getMessage();
 
                 if ($attempts >= $this->settings->getMaxAttempts()) {
@@ -85,11 +87,11 @@ class OutboxDispatcher
 
                 $this->logger->error('Outbox delivery publish failed.', [
                     'deliveryId' => $deliveryId,
-                    'eventId' => $eventId,
-                    'targetId' => $target['id'] ?? '',
-                    'targetKey' => $target['key'] ?? '',
-                    'attempts' => $attempts,
-                    'error' => $exception,
+                    'eventId'    => $eventId,
+                    'targetId'   => $target['id'] ?? '',
+                    'targetKey'  => $target['key'] ?? '',
+                    'attempts'   => $attempts,
+                    'error'      => $exception,
                 ]);
             }
         }
@@ -99,7 +101,7 @@ class OutboxDispatcher
 
     private function getBackoffSeconds(int $attempts): int
     {
-        $power = max(0, min(10, $attempts - 1));
+        $power   = max(0, min(10, $attempts - 1));
         $seconds = 60 * (2 ** $power);
 
         return min(86400, $seconds);
@@ -107,24 +109,26 @@ class OutboxDispatcher
 
     /**
      * @param array<string, mixed> $row
+     *
      * @return array{id: string, key: string, type: string, config: array<string, mixed>}
      */
     private function buildTargetFromRow(array $row): array
     {
         $config = [];
+
         if (!empty($row['target_config'])) {
             $decodedConfig = json_decode((string) $row['target_config'], true);
-            $config = $decodedConfig === (array) $decodedConfig ? $decodedConfig : [];
+            $config        = $decodedConfig === (array) $decodedConfig ? $decodedConfig : [];
         }
 
         $destinationId = (string) ($row['destination_id'] ?? '');
-        $targetKey = (string) ($row['target_key'] ?? '');
-        $targetType = (string) ($row['target_type'] ?? '');
+        $targetKey     = (string) ($row['target_key'] ?? '');
+        $targetType    = (string) ($row['target_type'] ?? '');
 
         return [
-            'id' => $destinationId === '' ? $targetKey : $destinationId,
-            'key' => $targetKey,
-            'type' => $targetType,
+            'id'     => $destinationId === '' ? $targetKey : $destinationId,
+            'key'    => $targetKey,
+            'type'   => $targetType,
             'config' => $config,
         ];
     }
@@ -137,7 +141,7 @@ class OutboxDispatcher
         array $target,
         string $deliveryId,
         int $attempt,
-        string $errorMessage
+        string $errorMessage,
     ): void {
         $resultEvent = new OutboxDeliveryResultEvent(
             Context::createDefaultContext(),

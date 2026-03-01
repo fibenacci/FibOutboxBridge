@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Destination\Strategy;
 
@@ -10,7 +12,7 @@ use GuzzleHttp\Exception\GuzzleException;
 class CentrifugoOutboxDestinationStrategy implements OutboxDestinationStrategyInterface
 {
     public function __construct(
-        private readonly ClientInterface $httpClient
+        private readonly ClientInterface $httpClient,
     ) {
     }
 
@@ -28,30 +30,30 @@ class CentrifugoOutboxDestinationStrategy implements OutboxDestinationStrategyIn
     {
         return [
             [
-                'name' => 'apiUrl',
-                'type' => 'url',
-                'label' => 'HTTP API URL',
-                'required' => true,
+                'name'        => 'apiUrl',
+                'type'        => 'url',
+                'label'       => 'HTTP API URL',
+                'required'    => true,
                 'placeholder' => 'http://centrifugo:8000/api',
             ],
             [
-                'name' => 'apiKey',
-                'type' => 'text',
-                'label' => 'API key (direct, avoid in production)',
+                'name'     => 'apiKey',
+                'type'     => 'text',
+                'label'    => 'API key (direct, avoid in production)',
                 'required' => false,
             ],
             [
-                'name' => 'apiKeyRef',
-                'type' => 'text',
-                'label' => 'API key reference (env:... or file:...)',
-                'required' => false,
+                'name'        => 'apiKeyRef',
+                'type'        => 'text',
+                'label'       => 'API key reference (env:... or file:...)',
+                'required'    => false,
                 'placeholder' => 'env:OUTBOX_CENTRIFUGO_API_KEY',
             ],
             [
-                'name' => 'channel',
-                'type' => 'text',
-                'label' => 'Channel',
-                'required' => true,
+                'name'        => 'channel',
+                'type'        => 'text',
+                'label'       => 'Channel',
+                'required'    => true,
                 'placeholder' => 'shopware.outbox.events',
             ],
         ];
@@ -79,18 +81,18 @@ class CentrifugoOutboxDestinationStrategy implements OutboxDestinationStrategyIn
         try {
             $response = $this->httpClient->request('POST', $config['apiUrl'], [
                 'headers' => [
-                    'Content-Type' => 'application/json',
+                    'Content-Type'  => 'application/json',
                     'Authorization' => sprintf('apikey %s', $config['apiKey']),
                 ],
                 'json' => [
                     'method' => 'publish',
                     'params' => [
                         'channel' => $config['channel'],
-                        'data' => [
-                            'deliveryId' => $context['deliveryId'],
-                            'destinationId' => $context['id'],
+                        'data'    => [
+                            'deliveryId'     => $context['deliveryId'],
+                            'destinationId'  => $context['id'],
                             'destinationKey' => $context['key'],
-                            'event' => $event->toArray(),
+                            'event'          => $event->toArray(),
                         ],
                     ],
                 ],
@@ -104,6 +106,7 @@ class CentrifugoOutboxDestinationStrategy implements OutboxDestinationStrategyIn
         }
 
         $payload = json_decode((string) $response->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+
         if ($payload === (array) $payload && !empty($payload['error'])) {
             $errorJson = json_encode($payload['error']);
             throw new \RuntimeException(sprintf('Centrifugo publish returned error: %s', $errorJson ?: 'unknown'));

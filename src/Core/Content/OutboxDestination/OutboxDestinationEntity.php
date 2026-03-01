@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Content\OutboxDestination;
 
@@ -18,7 +20,7 @@ class OutboxDestinationEntity extends Entity
     protected bool $isActive = true;
 
     /**
-     * @var array<string, mixed>|null
+     * @var null|array<string, mixed>
      */
     protected ?array $config = null;
 
@@ -63,7 +65,7 @@ class OutboxDestinationEntity extends Entity
     }
 
     /**
-     * @return array<string, mixed>|null
+     * @return null|array<string, mixed>
      */
     public function getConfig(): ?array
     {
@@ -71,7 +73,7 @@ class OutboxDestinationEntity extends Entity
     }
 
     /**
-     * @param array<string, mixed>|null $config
+     * @param null|array<string, mixed> $config
      */
     public function setConfig(?array $config): void
     {

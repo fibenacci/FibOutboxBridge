@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Controller\Api;
 
@@ -16,7 +18,7 @@ class OutboxActionController extends AbstractController
     public function __construct(
         private readonly OutboxDispatcher $dispatcher,
         private readonly OutboxRepository $repository,
-        private readonly OutboxDestinationStrategyRegistry $destinationStrategyRegistry
+        private readonly OutboxDestinationStrategyRegistry $destinationStrategyRegistry,
     ) {
     }
 
@@ -28,7 +30,7 @@ class OutboxActionController extends AbstractController
     )]
     public function dispatch(RequestDataBag $dataBag): JsonResponse
     {
-        $limit = $dataBag->getInt('limit', 100);
+        $limit    = $dataBag->getInt('limit', 100);
         $workerId = $dataBag->getString('workerId', 'admin');
 
         $result = $this->dispatcher->dispatchBatch($limit, $workerId);
@@ -61,12 +63,12 @@ class OutboxActionController extends AbstractController
     )]
     public function requeueDead(RequestDataBag $dataBag): JsonResponse
     {
-        $limit = $dataBag->getInt('limit', 100);
+        $limit     = $dataBag->getInt('limit', 100);
         $eventName = $dataBag->getString('eventName');
 
         return new JsonResponse([
             'data' => [
-                'requeued' => $this->repository->requeueDead($limit, $eventName?: null),
+                'requeued' => $this->repository->requeueDead($limit, $eventName ?: null),
             ],
         ]);
     }

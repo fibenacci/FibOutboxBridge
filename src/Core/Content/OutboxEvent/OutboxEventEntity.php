@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Content\OutboxEvent;
 
@@ -21,7 +23,7 @@ class OutboxEventEntity extends Entity
     protected array $payload = [];
 
     /**
-     * @var array<string, mixed>|null
+     * @var null|array<string, mixed>
      */
     protected ?array $meta = null;
 
@@ -88,7 +90,7 @@ class OutboxEventEntity extends Entity
     }
 
     /**
-     * @return array<string, mixed>|null
+     * @return null|array<string, mixed>
      */
     public function getMeta(): ?array
     {
@@ -96,7 +98,7 @@ class OutboxEventEntity extends Entity
     }
 
     /**
-     * @param array<string, mixed>|null $meta
+     * @param null|array<string, mixed> $meta
      */
     public function setMeta(?array $meta): void
     {

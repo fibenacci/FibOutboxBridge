@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Service;
 
@@ -15,7 +17,7 @@ class OutboxEventBus
 
     public function __construct(
         private readonly OutboxRepository $outboxRepository,
-        private readonly Connection $connection
+        private readonly Connection $connection,
     ) {
     }
 
@@ -25,15 +27,15 @@ class OutboxEventBus
     }
 
     /**
-     * @param array<string, mixed> $payload
-     * @param array<string, mixed>|null $meta
+     * @param array<string, mixed>      $payload
+     * @param null|array<string, mixed> $meta
      */
     public function recordNamed(
         string $eventName,
         string $aggregateType,
         string $aggregateId,
         array $payload,
-        ?array $meta = null
+        ?array $meta = null,
     ): DomainEvent {
         $event = DomainEvent::create(
             $eventName,
@@ -50,7 +52,7 @@ class OutboxEventBus
 
     public function flush(): int
     {
-        $events = $this->recordedEvents;
+        $events               = $this->recordedEvents;
         $this->recordedEvents = [];
 
         try {
@@ -66,7 +68,9 @@ class OutboxEventBus
      * Executes domain work + outbox flush in one DB transaction.
      *
      * @template T
+     *
      * @param callable(self):T $callback
+     *
      * @return T
      */
     public function transactional(callable $callback): mixed

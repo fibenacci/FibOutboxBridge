@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Security;
 
@@ -11,4 +13,3 @@ interface OutboxCredentialResolverInterface
      */
     public function resolveConfig(array $config): array;
 }
-

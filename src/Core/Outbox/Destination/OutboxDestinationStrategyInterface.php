@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Destination;
 
@@ -17,7 +19,7 @@ interface OutboxDestinationStrategyInterface
      *   label: string,
      *   required?: bool,
      *   placeholder?: string,
-     *   default?: scalar|null
+     *   default?: null|scalar
      * }>
      */
     public function getConfigFields(): array;
@@ -29,7 +31,7 @@ interface OutboxDestinationStrategyInterface
 
     /**
      * @param array{id: string, key: string, deliveryId: string} $context
-     * @param array<string, mixed> $config
+     * @param array<string, mixed>                               $config
      */
     public function publish(DomainEvent $event, array $context, array $config): void;
 }

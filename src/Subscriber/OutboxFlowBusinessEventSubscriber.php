@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Subscriber;
 
@@ -13,7 +15,7 @@ class OutboxFlowBusinessEventSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly OutboxRouteResolver $routeResolver,
-        private readonly BusinessEventCollector $businessEventCollector
+        private readonly BusinessEventCollector $businessEventCollector,
     ) {
     }
 
@@ -30,13 +32,15 @@ class OutboxFlowBusinessEventSubscriber implements EventSubscriberInterface
 
         foreach ($this->routeResolver->getConfiguredFlowEventNames() as $flowEventName) {
             $definition = $this->businessEventCollector->define(OutboxFlowForwardedEvent::class, $flowEventName);
+
             if ($definition !== null) {
                 $collection->set($flowEventName, $definition);
             }
         }
 
-        $eventName = OutboxDeliveryResultEvent::EVENT_NAME_FAILED;
+        $eventName  = OutboxDeliveryResultEvent::EVENT_NAME_FAILED;
         $definition = $this->businessEventCollector->define(OutboxDeliveryResultEvent::class, $eventName);
+
         if ($definition !== null) {
             $collection->set($eventName, $definition);
         }

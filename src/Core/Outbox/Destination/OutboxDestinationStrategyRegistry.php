@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Destination;
 
@@ -16,6 +18,7 @@ class OutboxDestinationStrategyRegistry
     {
         foreach ($strategies as $strategy) {
             $type = $strategy->getType();
+
             if (empty($type)) {
                 continue;
             }
@@ -43,7 +46,7 @@ class OutboxDestinationStrategyRegistry
      *      label: string,
      *      required?: bool,
      *      placeholder?: string,
-     *      default?: scalar|null
+     *      default?: null|scalar
      *     }>
      *    }>
      */
@@ -53,8 +56,8 @@ class OutboxDestinationStrategyRegistry
 
         foreach ($this->strategiesByType as $type => $strategy) {
             $definitions[] = [
-                'type' => $type,
-                'label' => $strategy->getLabel(),
+                'type'         => $type,
+                'label'        => $strategy->getLabel(),
                 'configFields' => $strategy->getConfigFields(),
             ];
         }

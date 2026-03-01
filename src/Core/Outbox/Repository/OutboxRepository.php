@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Repository;
 
@@ -11,20 +13,20 @@ use Shopware\Core\Framework\Uuid\Uuid;
 
 class OutboxRepository
 {
-    public const TABLE = 'fib_outbox_event';
+    public const TABLE          = 'fib_outbox_event';
     public const DELIVERY_TABLE = 'fib_outbox_delivery';
 
-    public const STATUS_PENDING = 'pending';
+    public const STATUS_PENDING    = 'pending';
     public const STATUS_PROCESSING = 'processing';
-    public const STATUS_PUBLISHED = 'published';
-    public const STATUS_FAILED = 'failed';
-    public const STATUS_DEAD = 'dead';
+    public const STATUS_PUBLISHED  = 'published';
+    public const STATUS_FAILED     = 'failed';
+    public const STATUS_DEAD       = 'dead';
 
     private ?bool $deliveryHasDestinationIdColumn = null;
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly OutboxRouteResolver $routeResolver
+        private readonly OutboxRouteResolver $routeResolver,
     ) {
     }
 
@@ -45,22 +47,22 @@ class OutboxRepository
         $now = new \DateTimeImmutable();
 
         $this->connection->insert(self::TABLE, [
-            'id' => $event->getId(),
-            'event_name' => $event->getEventName(),
+            'id'             => $event->getId(),
+            'event_name'     => $event->getEventName(),
             'aggregate_type' => $event->getAggregateType(),
-            'aggregate_id' => $event->getAggregateId(),
-            'payload' => json_encode($event->getPayload(), \JSON_THROW_ON_ERROR),
-            'meta' => $event->getMeta() === null ? null : json_encode($event->getMeta(), \JSON_THROW_ON_ERROR),
-            'occurred_at' => $event->getOccurredAt()->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-            'available_at' => $event->getOccurredAt()->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-            'published_at' => null,
-            'status' => self::STATUS_PENDING,
-            'attempts' => 0,
-            'locked_until' => null,
-            'lock_owner' => null,
-            'last_error' => null,
-            'created_at' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-            'updated_at' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+            'aggregate_id'   => $event->getAggregateId(),
+            'payload'        => json_encode($event->getPayload(), \JSON_THROW_ON_ERROR),
+            'meta'           => $event->getMeta() === null ? null : json_encode($event->getMeta(), \JSON_THROW_ON_ERROR),
+            'occurred_at'    => $event->getOccurredAt()->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+            'available_at'   => $event->getOccurredAt()->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+            'published_at'   => null,
+            'status'         => self::STATUS_PENDING,
+            'attempts'       => 0,
+            'locked_until'   => null,
+            'lock_owner'     => null,
+            'last_error'     => null,
+            'created_at'     => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+            'updated_at'     => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
         ]);
 
         $this->insertDeliveries($event->getId(), $destinations, $now);
@@ -80,22 +82,22 @@ class OutboxRepository
 
         foreach ($events as $event) {
             $this->connection->insert(self::TABLE, [
-                'id' => $event->getId(),
-                'event_name' => $event->getEventName(),
+                'id'             => $event->getId(),
+                'event_name'     => $event->getEventName(),
                 'aggregate_type' => $event->getAggregateType(),
-                'aggregate_id' => $event->getAggregateId(),
-                'payload' => json_encode($event->getPayload(), \JSON_THROW_ON_ERROR),
-                'meta' => $event->getMeta() === null ? null : json_encode($event->getMeta(), \JSON_THROW_ON_ERROR),
-                'occurred_at' => $event->getOccurredAt()->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-                'available_at' => $event->getOccurredAt()->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-                'published_at' => null,
-                'status' => self::STATUS_PENDING,
-                'attempts' => 0,
-                'locked_until' => null,
-                'lock_owner' => null,
-                'last_error' => null,
-                'created_at' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-                'updated_at' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+                'aggregate_id'   => $event->getAggregateId(),
+                'payload'        => json_encode($event->getPayload(), \JSON_THROW_ON_ERROR),
+                'meta'           => $event->getMeta() === null ? null : json_encode($event->getMeta(), \JSON_THROW_ON_ERROR),
+                'occurred_at'    => $event->getOccurredAt()->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+                'available_at'   => $event->getOccurredAt()->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+                'published_at'   => null,
+                'status'         => self::STATUS_PENDING,
+                'attempts'       => 0,
+                'locked_until'   => null,
+                'lock_owner'     => null,
+                'last_error'     => null,
+                'created_at'     => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+                'updated_at'     => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
             ]);
 
             $this->createDeliveriesForEvent($event, $now);
@@ -109,9 +111,9 @@ class OutboxRepository
      */
     public function claimDeliveryBatch(int $limit, string $workerId, int $lockSeconds): array
     {
-        $limit = max(1, $limit);
-        $now = new \DateTimeImmutable();
-        $lockUntil = $now->modify(sprintf('+%d seconds', $lockSeconds));
+        $limit      = max(1, $limit);
+        $now        = new \DateTimeImmutable();
+        $lockUntil  = $now->modify(sprintf('+%d seconds', $lockSeconds));
         $claimOwner = sprintf('%s:%s', $workerId, bin2hex(random_bytes(4)));
 
         return $this->claimDeliveryBatchOptimistic($limit, $claimOwner, $now, $lockUntil);
@@ -122,12 +124,12 @@ class OutboxRepository
         $now = (new \DateTimeImmutable())->format(Defaults::STORAGE_DATE_TIME_FORMAT);
 
         $this->connection->update(self::DELIVERY_TABLE, [
-            'status' => self::STATUS_PUBLISHED,
+            'status'       => self::STATUS_PUBLISHED,
             'published_at' => $now,
             'locked_until' => null,
-            'lock_owner' => null,
-            'last_error' => null,
-            'updated_at' => $now,
+            'lock_owner'   => null,
+            'last_error'   => null,
+            'updated_at'   => $now,
         ], ['id' => $deliveryId]);
 
         $this->syncEventStatus($eventId);
@@ -138,18 +140,18 @@ class OutboxRepository
         string $eventId,
         int $attempts,
         \DateTimeImmutable $availableAt,
-        string $errorMessage
+        string $errorMessage,
     ): void {
         $now = (new \DateTimeImmutable())->format(Defaults::STORAGE_DATE_TIME_FORMAT);
 
         $this->connection->update(self::DELIVERY_TABLE, [
-            'status' => self::STATUS_FAILED,
-            'attempts' => $attempts,
+            'status'       => self::STATUS_FAILED,
+            'attempts'     => $attempts,
             'available_at' => $availableAt->format(Defaults::STORAGE_DATE_TIME_FORMAT),
             'locked_until' => null,
-            'lock_owner' => null,
-            'last_error' => mb_substr($errorMessage, 0, 65000),
-            'updated_at' => $now,
+            'lock_owner'   => null,
+            'last_error'   => mb_substr($errorMessage, 0, 65000),
+            'updated_at'   => $now,
         ], ['id' => $deliveryId]);
 
         $this->syncEventStatus($eventId);
@@ -159,17 +161,17 @@ class OutboxRepository
         string $deliveryId,
         string $eventId,
         int $attempts,
-        string $errorMessage
+        string $errorMessage,
     ): void {
         $now = (new \DateTimeImmutable())->format(Defaults::STORAGE_DATE_TIME_FORMAT);
 
         $this->connection->update(self::DELIVERY_TABLE, [
-            'status' => self::STATUS_DEAD,
-            'attempts' => $attempts,
+            'status'       => self::STATUS_DEAD,
+            'attempts'     => $attempts,
             'locked_until' => null,
-            'lock_owner' => null,
-            'last_error' => mb_substr($errorMessage, 0, 65000),
-            'updated_at' => $now,
+            'lock_owner'   => null,
+            'last_error'   => mb_substr($errorMessage, 0, 65000),
+            'updated_at'   => $now,
         ], ['id' => $deliveryId]);
 
         $this->syncEventStatus($eventId);
@@ -178,14 +180,14 @@ class OutboxRepository
     public function resetExpiredProcessingLocks(): int
     {
         $eventIds = $this->connection->fetchFirstColumn(<<<SQL
-            SELECT DISTINCT `event_id`
-            FROM `fib_outbox_delivery`
-            WHERE `status` = :processing
-              AND `locked_until` IS NOT NULL
-              AND `locked_until` < :now
-        SQL, [
+                SELECT DISTINCT `event_id`
+                FROM `fib_outbox_delivery`
+                WHERE `status` = :processing
+                  AND `locked_until` IS NOT NULL
+                  AND `locked_until` < :now
+            SQL, [
             'processing' => self::STATUS_PROCESSING,
-            'now' => (new \DateTimeImmutable())->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+            'now'        => (new \DateTimeImmutable())->format(Defaults::STORAGE_DATE_TIME_FORMAT),
         ]);
 
         if ($eventIds === []) {
@@ -195,23 +197,24 @@ class OutboxRepository
         $now = (new \DateTimeImmutable())->format(Defaults::STORAGE_DATE_TIME_FORMAT);
 
         $updated = $this->connection->executeStatement(<<<SQL
-            UPDATE `fib_outbox_delivery`
-            SET
-                `status` = :pending,
-                `locked_until` = NULL,
-                `lock_owner` = NULL,
-                `updated_at` = :now
-            WHERE `status` = :processing
-              AND `locked_until` IS NOT NULL
-              AND `locked_until` < :now
-        SQL, [
-            'pending' => self::STATUS_PENDING,
+                UPDATE `fib_outbox_delivery`
+                SET
+                    `status` = :pending,
+                    `locked_until` = NULL,
+                    `lock_owner` = NULL,
+                    `updated_at` = :now
+                WHERE `status` = :processing
+                  AND `locked_until` IS NOT NULL
+                  AND `locked_until` < :now
+            SQL, [
+            'pending'    => self::STATUS_PENDING,
             'processing' => self::STATUS_PROCESSING,
-            'now' => $now,
+            'now'        => $now,
         ]);
 
         foreach ($eventIds as $eventId) {
             $eventId = (string) $eventId;
+
             if ($eventId === '') {
                 continue;
             }
@@ -227,40 +230,40 @@ class OutboxRepository
         $limit = max(1, min(1000, $limit));
 
         $whereEvent = '';
-        $params = [
+        $params     = [
             'dead' => self::STATUS_DEAD,
         ];
 
         if (!empty($eventName)) {
-            $whereEvent = ' AND e.`event_name` = :eventName';
+            $whereEvent          = ' AND e.`event_name` = :eventName';
             $params['eventName'] = $eventName;
         }
 
         $rows = $this->connection->fetchAllAssociative(<<<SQL
-            SELECT d.`id` AS delivery_id, d.`event_id`
-            FROM `fib_outbox_delivery` d
-            INNER JOIN `fib_outbox_event` e ON e.`id` = d.`event_id`
-            WHERE d.`status` = :dead{$whereEvent}
-            ORDER BY d.`updated_at` DESC, d.`id` DESC
-            LIMIT {$limit}
-        SQL, $params);
+                SELECT d.`id` AS delivery_id, d.`event_id`
+                FROM `fib_outbox_delivery` d
+                INNER JOIN `fib_outbox_event` e ON e.`id` = d.`event_id`
+                WHERE d.`status` = :dead{$whereEvent}
+                ORDER BY d.`updated_at` DESC, d.`id` DESC
+                LIMIT {$limit}
+            SQL, $params);
 
         if ($rows === []) {
             return 0;
         }
 
         $deliveryIds = [];
-        $eventIds = [];
+        $eventIds    = [];
 
         foreach ($rows as $row) {
             $deliveryId = (string) ($row['delivery_id'] ?? '');
-            $eventId = (string) ($row['event_id'] ?? '');
+            $eventId    = (string) ($row['event_id'] ?? '');
 
             if ($deliveryId === '' || $eventId === '') {
                 continue;
             }
 
-            $deliveryIds[] = $deliveryId;
+            $deliveryIds[]      = $deliveryId;
             $eventIds[$eventId] = true;
         }
 
@@ -271,20 +274,20 @@ class OutboxRepository
         $now = (new \DateTimeImmutable())->format(Defaults::STORAGE_DATE_TIME_FORMAT);
 
         $updated = $this->connection->executeStatement(<<<SQL
-            UPDATE `fib_outbox_delivery`
-            SET
-                `status` = :pending,
-                `attempts` = 0,
-                `available_at` = :now,
-                `locked_until` = NULL,
-                `lock_owner` = NULL,
-                `last_error` = NULL,
-                `updated_at` = :now
-            WHERE `id` IN (:ids)
-        SQL, [
+                UPDATE `fib_outbox_delivery`
+                SET
+                    `status` = :pending,
+                    `attempts` = 0,
+                    `available_at` = :now,
+                    `locked_until` = NULL,
+                    `lock_owner` = NULL,
+                    `last_error` = NULL,
+                    `updated_at` = :now
+                WHERE `id` IN (:ids)
+            SQL, [
             'pending' => self::STATUS_PENDING,
-            'now' => $now,
-            'ids' => $deliveryIds,
+            'now'     => $now,
+            'ids'     => $deliveryIds,
         ], [
             'ids' => ArrayParameterType::STRING,
         ]);
@@ -302,17 +305,17 @@ class OutboxRepository
     public function getStatusCounts(): array
     {
         $rows = $this->connection->fetchAllAssociative(<<<SQL
-            SELECT `status`, COUNT(*) AS `cnt`
-            FROM `fib_outbox_event`
-            GROUP BY `status`
-        SQL);
+                SELECT `status`, COUNT(*) AS `cnt`
+                FROM `fib_outbox_event`
+                GROUP BY `status`
+            SQL);
 
         $counts = [
-            self::STATUS_PENDING => 0,
+            self::STATUS_PENDING    => 0,
             self::STATUS_PROCESSING => 0,
-            self::STATUS_PUBLISHED => 0,
-            self::STATUS_FAILED => 0,
-            self::STATUS_DEAD => 0,
+            self::STATUS_PUBLISHED  => 0,
+            self::STATUS_FAILED     => 0,
+            self::STATUS_DEAD       => 0,
         ];
 
         foreach ($rows as $row) {
@@ -321,6 +324,7 @@ class OutboxRepository
             }
 
             $status = (string) $row['status'];
+
             if (!array_key_exists($status, $counts)) {
                 continue;
             }
@@ -334,10 +338,10 @@ class OutboxRepository
     public function getOldestPendingLagSeconds(): ?int
     {
         $value = $this->connection->fetchOne(<<<SQL
-            SELECT TIMESTAMPDIFF(SECOND, MIN(`occurred_at`), NOW(3))
-            FROM `fib_outbox_event`
-            WHERE `status` = :status
-        SQL, [
+                SELECT TIMESTAMPDIFF(SECOND, MIN(`occurred_at`), NOW(3))
+                FROM `fib_outbox_event`
+                WHERE `status` = :status
+            SQL, [
             'status' => self::STATUS_PENDING,
         ]);
 
@@ -353,17 +357,17 @@ class OutboxRepository
         $limit = max(1, min(5000, $limit));
 
         $rows = $this->connection->fetchAllAssociative(<<<SQL
-            SELECT e.*
-            FROM `fib_outbox_event` e
-            WHERE e.`status` IN (:statuses)
-              AND NOT EXISTS (
-                  SELECT 1
-                  FROM `fib_outbox_delivery` d
-                  WHERE d.`event_id` = e.`id`
-              )
-            ORDER BY e.`created_at` ASC
-            LIMIT {$limit}
-        SQL, [
+                SELECT e.*
+                FROM `fib_outbox_event` e
+                WHERE e.`status` IN (:statuses)
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM `fib_outbox_delivery` d
+                      WHERE d.`event_id` = e.`id`
+                  )
+                ORDER BY e.`created_at` ASC
+                LIMIT {$limit}
+            SQL, [
             'statuses' => [self::STATUS_PENDING, self::STATUS_PROCESSING, self::STATUS_FAILED],
         ], [
             'statuses' => ArrayParameterType::STRING,
@@ -373,7 +377,7 @@ class OutboxRepository
             return 0;
         }
 
-        $now = new \DateTimeImmutable();
+        $now   = new \DateTimeImmutable();
         $count = 0;
 
         foreach ($rows as $row) {
@@ -392,9 +396,10 @@ class OutboxRepository
     {
         foreach ($targets as $target) {
             $destinationId = (string) ($target['id'] ?? '');
-            $targetKey = (string) ($target['key'] ?? '');
-            $targetType = (string) ($target['type'] ?? '');
-            $targetConfig = $target['config'] ?? [];
+            $targetKey     = (string) ($target['key'] ?? '');
+            $targetType    = (string) ($target['type'] ?? '');
+            $targetConfig  = $target['config'] ?? [];
+
             if ($targetConfig !== (array) $targetConfig) {
                 $targetConfig = [];
             }
@@ -404,27 +409,27 @@ class OutboxRepository
             }
 
             $this->connection->insert(self::DELIVERY_TABLE, [
-                'id' => Uuid::randomHex(),
-                'event_id' => $eventId,
-                'target_key' => $targetKey,
-                'target_type' => $targetType,
+                'id'            => Uuid::randomHex(),
+                'event_id'      => $eventId,
+                'target_key'    => $targetKey,
+                'target_type'   => $targetType,
                 'target_config' => json_encode($targetConfig, \JSON_THROW_ON_ERROR),
-                'status' => self::STATUS_PENDING,
-                'attempts' => 0,
-                'available_at' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-                'published_at' => null,
-                'locked_until' => null,
-                'lock_owner' => null,
-                'last_error' => null,
-                'created_at' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-                'updated_at' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+                'status'        => self::STATUS_PENDING,
+                'attempts'      => 0,
+                'available_at'  => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+                'published_at'  => null,
+                'locked_until'  => null,
+                'lock_owner'    => null,
+                'last_error'    => null,
+                'created_at'    => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+                'updated_at'    => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
             ]);
 
             if ($this->hasDeliveryDestinationIdColumn()) {
                 $this->connection->update(self::DELIVERY_TABLE, [
                     'destination_id' => $destinationId,
                 ], [
-                    'event_id' => $eventId,
+                    'event_id'   => $eventId,
                     'target_key' => $targetKey,
                 ]);
             }
@@ -437,9 +442,9 @@ class OutboxRepository
 
         if ($targets === []) {
             $this->connection->update(self::TABLE, [
-                'status' => self::STATUS_PUBLISHED,
+                'status'       => self::STATUS_PUBLISHED,
                 'published_at' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-                'updated_at' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+                'updated_at'   => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
             ], [
                 'id' => $event->getId(),
             ]);
@@ -454,41 +459,41 @@ class OutboxRepository
     private function syncEventStatus(string $eventId): void
     {
         $rows = $this->connection->fetchAllAssociative(<<<SQL
-            SELECT `status`, COUNT(*) AS `cnt`
-            FROM `fib_outbox_delivery`
-            WHERE `event_id` = :eventId
-            GROUP BY `status`
-        SQL, [
+                SELECT `status`, COUNT(*) AS `cnt`
+                FROM `fib_outbox_delivery`
+                WHERE `event_id` = :eventId
+                GROUP BY `status`
+            SQL, [
             'eventId' => $eventId,
         ]);
 
         $deliveryMeta = $this->connection->fetchAssociative(<<<SQL
-            SELECT
-                COALESCE(MAX(`attempts`), 0) AS `max_attempts`
-            FROM `fib_outbox_delivery`
-            WHERE `event_id` = :eventId
-        SQL, [
+                SELECT
+                    COALESCE(MAX(`attempts`), 0) AS `max_attempts`
+                FROM `fib_outbox_delivery`
+                WHERE `event_id` = :eventId
+            SQL, [
             'eventId' => $eventId,
         ]);
 
         $latestError = $this->connection->fetchOne(<<<SQL
-            SELECT `last_error`
-            FROM `fib_outbox_delivery`
-            WHERE `event_id` = :eventId
-              AND `last_error` IS NOT NULL
-              AND `last_error` <> ''
-            ORDER BY `updated_at` DESC, `id` DESC
-            LIMIT 1
-        SQL, [
+                SELECT `last_error`
+                FROM `fib_outbox_delivery`
+                WHERE `event_id` = :eventId
+                  AND `last_error` IS NOT NULL
+                  AND `last_error` <> ''
+                ORDER BY `updated_at` DESC, `id` DESC
+                LIMIT 1
+            SQL, [
             'eventId' => $eventId,
         ]);
 
         $counts = [
-            self::STATUS_PENDING => 0,
-            self::STATUS_FAILED => 0,
+            self::STATUS_PENDING    => 0,
+            self::STATUS_FAILED     => 0,
             self::STATUS_PROCESSING => 0,
-            self::STATUS_PUBLISHED => 0,
-            self::STATUS_DEAD => 0,
+            self::STATUS_PUBLISHED  => 0,
+            self::STATUS_DEAD       => 0,
         ];
 
         $total = 0;
@@ -499,7 +504,7 @@ class OutboxRepository
             }
 
             $status = (string) $row['status'];
-            $count = (int) ($row['cnt'] ?? 0);
+            $count  = (int) ($row['cnt'] ?? 0);
             $total += $count;
 
             if (array_key_exists($status, $counts)) {
@@ -530,11 +535,11 @@ class OutboxRepository
         }
 
         $this->connection->update(self::TABLE, [
-            'status' => $eventStatus,
-            'attempts' => $maxAttempts,
+            'status'       => $eventStatus,
+            'attempts'     => $maxAttempts,
             'published_at' => $publishedAt,
-            'last_error' => empty($latestError) ? null : mb_substr((string) $latestError, 0, 65000),
-            'updated_at' => (new \DateTimeImmutable())->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+            'last_error'   => empty($latestError) ? null : mb_substr((string) $latestError, 0, 65000),
+            'updated_at'   => (new \DateTimeImmutable())->format(Defaults::STORAGE_DATE_TIME_FORMAT),
         ], [
             'id' => $eventId,
         ]);
@@ -547,20 +552,20 @@ class OutboxRepository
         int $limit,
         string $claimOwner,
         \DateTimeImmutable $now,
-        \DateTimeImmutable $lockUntil
+        \DateTimeImmutable $lockUntil,
     ): array {
         $candidateIds = $this->connection->fetchFirstColumn(<<<SQL
-            SELECT `id`
-            FROM `fib_outbox_delivery`
-            WHERE (`status` = :pending OR `status` = :failed)
-              AND `available_at` <= :now
-              AND (`locked_until` IS NULL OR `locked_until` < :now)
-            ORDER BY `available_at` ASC, `created_at` ASC, `id` ASC
-            LIMIT {$limit}
-        SQL, [
+                SELECT `id`
+                FROM `fib_outbox_delivery`
+                WHERE (`status` = :pending OR `status` = :failed)
+                  AND `available_at` <= :now
+                  AND (`locked_until` IS NULL OR `locked_until` < :now)
+                ORDER BY `available_at` ASC, `created_at` ASC, `id` ASC
+                LIMIT {$limit}
+            SQL, [
             'pending' => self::STATUS_PENDING,
-            'failed' => self::STATUS_FAILED,
-            'now' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+            'failed'  => self::STATUS_FAILED,
+            'now'     => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
         ]);
 
         if ($candidateIds === []) {
@@ -571,30 +576,31 @@ class OutboxRepository
 
         foreach ($candidateIds as $candidateId) {
             $candidateId = (string) $candidateId;
+
             if ($candidateId === '') {
                 continue;
             }
 
             $updated = $this->connection->executeStatement(<<<SQL
-                UPDATE `fib_outbox_delivery`
-                SET
-                    `status` = :processing,
-                    `lock_owner` = :lockOwner,
-                    `locked_until` = :lockedUntil,
-                    `updated_at` = :updatedAt
-                WHERE `id` = :id
-                  AND (`status` = :pending OR `status` = :failed)
-                  AND `available_at` <= :now
-                  AND (`locked_until` IS NULL OR `locked_until` < :now)
-            SQL, [
-                'processing' => self::STATUS_PROCESSING,
-                'lockOwner' => $claimOwner,
+                    UPDATE `fib_outbox_delivery`
+                    SET
+                        `status` = :processing,
+                        `lock_owner` = :lockOwner,
+                        `locked_until` = :lockedUntil,
+                        `updated_at` = :updatedAt
+                    WHERE `id` = :id
+                      AND (`status` = :pending OR `status` = :failed)
+                      AND `available_at` <= :now
+                      AND (`locked_until` IS NULL OR `locked_until` < :now)
+                SQL, [
+                'processing'  => self::STATUS_PROCESSING,
+                'lockOwner'   => $claimOwner,
                 'lockedUntil' => $lockUntil->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-                'updatedAt' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-                'pending' => self::STATUS_PENDING,
-                'failed' => self::STATUS_FAILED,
-                'now' => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
-                'id' => $candidateId,
+                'updatedAt'   => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+                'pending'     => self::STATUS_PENDING,
+                'failed'      => self::STATUS_FAILED,
+                'now'         => $now->format(Defaults::STORAGE_DATE_TIME_FORMAT),
+                'id'          => $candidateId,
             ]);
 
             if ($updated === 1) {
@@ -615,6 +621,7 @@ class OutboxRepository
 
     /**
      * @param list<string> $deliveryIds
+     *
      * @return list<array<string, mixed>>
      */
     private function fetchDeliveryRowsByIds(array $deliveryIds): array
@@ -624,24 +631,24 @@ class OutboxRepository
         }
 
         $destinationSelect = $this->hasDeliveryDestinationIdColumn()
-            ? "d.`destination_id`,"
-            : "NULL AS `destination_id`,";
+            ? 'd.`destination_id`,'
+            : 'NULL AS `destination_id`,';
 
         return $this->connection->fetchAllAssociative(<<<SQL
-            SELECT
-                d.`id` AS `delivery_id`,
-                d.`event_id`,
-                {$destinationSelect}
-                d.`target_key`,
-                d.`target_type`,
-                d.`target_config`,
-                d.`attempts` AS `delivery_attempts`,
-                e.*
-            FROM `fib_outbox_delivery` d
-            INNER JOIN `fib_outbox_event` e ON e.`id` = d.`event_id`
-            WHERE d.`id` IN (:ids)
-            ORDER BY d.`available_at` ASC, d.`created_at` ASC, d.`id` ASC
-        SQL, [
+                SELECT
+                    d.`id` AS `delivery_id`,
+                    d.`event_id`,
+                    {$destinationSelect}
+                    d.`target_key`,
+                    d.`target_type`,
+                    d.`target_config`,
+                    d.`attempts` AS `delivery_attempts`,
+                    e.*
+                FROM `fib_outbox_delivery` d
+                INNER JOIN `fib_outbox_event` e ON e.`id` = d.`event_id`
+                WHERE d.`id` IN (:ids)
+                ORDER BY d.`available_at` ASC, d.`created_at` ASC, d.`id` ASC
+            SQL, [
             'ids' => $deliveryIds,
         ], [
             'ids' => ArrayParameterType::STRING,
@@ -655,13 +662,13 @@ class OutboxRepository
         }
 
         $this->deliveryHasDestinationIdColumn = (int) $this->connection->fetchOne(<<<SQL
-            SELECT COUNT(*)
-            FROM information_schema.columns
-            WHERE table_schema = DATABASE()
-              AND table_name = :tableName
-              AND column_name = :columnName
-        SQL, [
-            'tableName' => self::DELIVERY_TABLE,
+                SELECT COUNT(*)
+                FROM information_schema.columns
+                WHERE table_schema = DATABASE()
+                  AND table_name = :tableName
+                  AND column_name = :columnName
+            SQL, [
+            'tableName'  => self::DELIVERY_TABLE,
             'columnName' => 'destination_id',
         ]) > 0;
 

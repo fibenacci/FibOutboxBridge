@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Subscriber;
 
@@ -16,7 +18,7 @@ class OutboxDestinationSecuritySubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly OutboxSecretConfigMasker $secretConfigMasker,
-        private readonly Connection $connection
+        private readonly Connection $connection,
     ) {
     }
 
@@ -24,7 +26,7 @@ class OutboxDestinationSecuritySubscriber implements EventSubscriberInterface
     {
         return [
             OutboxDestinationDefinition::ENTITY_NAME . '.loaded' => 'onDestinationLoaded',
-            PreWriteValidationEvent::class => 'onPreWriteValidation',
+            PreWriteValidationEvent::class                       => 'onPreWriteValidation',
         ];
     }
 
@@ -43,6 +45,7 @@ class OutboxDestinationSecuritySubscriber implements EventSubscriberInterface
             }
 
             $config = $entity->getConfig();
+
             if ($config !== (array) $config) {
                 continue;
             }
@@ -62,7 +65,7 @@ class OutboxDestinationSecuritySubscriber implements EventSubscriberInterface
                 continue;
             }
 
-            $payload = $command->getPayload();
+            $payload   = $command->getPayload();
             $newConfig = $payload['config'] ?? null;
 
             if ($newConfig !== (array) $newConfig) {
@@ -70,12 +73,14 @@ class OutboxDestinationSecuritySubscriber implements EventSubscriberInterface
             }
 
             $decodedPrimaryKey = $command->getDecodedPrimaryKey();
-            $destinationId = (string) ($decodedPrimaryKey['id'] ?? '');
+            $destinationId     = (string) ($decodedPrimaryKey['id'] ?? '');
+
             if ($destinationId === '' || !Uuid::isValid($destinationId)) {
                 continue;
             }
 
             $existingConfig = $this->loadExistingConfig($destinationId);
+
             if ($existingConfig === []) {
                 continue;
             }

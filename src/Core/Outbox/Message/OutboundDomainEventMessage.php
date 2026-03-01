@@ -1,12 +1,14 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Message;
 
 class OutboundDomainEventMessage
 {
     /**
-     * @param array<string, mixed> $payload
-     * @param array<string, mixed>|null $meta
+     * @param array<string, mixed>      $payload
+     * @param null|array<string, mixed> $meta
      */
     public function __construct(
         private readonly string $eventId,
@@ -15,7 +17,7 @@ class OutboundDomainEventMessage
         private readonly string $aggregateId,
         private readonly string $occurredAt,
         private readonly array $payload,
-        private readonly ?array $meta
+        private readonly ?array $meta,
     ) {
     }
 
@@ -53,7 +55,7 @@ class OutboundDomainEventMessage
     }
 
     /**
-     * @return array<string, mixed>|null
+     * @return null|array<string, mixed>
      */
     public function getMeta(): ?array
     {

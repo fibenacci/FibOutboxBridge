@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Command;
 
@@ -18,7 +20,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class OutboxEnqueueTestCommand extends Command
 {
     public function __construct(
-        private readonly OutboxRepository $repository
+        private readonly OutboxRepository $repository,
     ) {
         parent::__construct();
     }
@@ -49,12 +51,12 @@ class OutboxEnqueueTestCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $eventName = (string) $input->getArgument('eventName');
+        $eventName     = (string) $input->getArgument('eventName');
         $aggregateType = (string) $input->getArgument('aggregateType');
-        $aggregateId = (string) $input->getArgument('aggregateId');
+        $aggregateId   = (string) $input->getArgument('aggregateId');
 
         $event = DomainEvent::create($eventName, $aggregateType, $aggregateId, [
-            'message' => 'FibOutboxBridge test event',
+            'message'   => 'FibOutboxBridge test event',
             'emittedAt' => (new \DateTimeImmutable())->format(\DATE_ATOM),
         ], [
             'source' => 'cli',

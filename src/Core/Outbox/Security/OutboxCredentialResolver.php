@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Security;
 
@@ -27,8 +29,9 @@ class OutboxCredentialResolver implements OutboxCredentialResolverInterface
             $key = (string) $key;
 
             if (!empty($value) && str_ends_with($key, 'Ref')) {
-                $targetKey = substr($key, 0, -3);
+                $targetKey      = substr($key, 0, -3);
                 $referenceValue = (string) $value;
+
                 if ($targetKey === '') {
                     continue;
                 }

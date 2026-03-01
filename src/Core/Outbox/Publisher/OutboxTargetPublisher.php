@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Publisher;
 
@@ -10,13 +12,13 @@ class OutboxTargetPublisher
 {
     public function __construct(
         private readonly OutboxDestinationStrategyRegistry $strategyRegistry,
-        private readonly OutboxCredentialResolverInterface $credentialResolver
+        private readonly OutboxCredentialResolverInterface $credentialResolver,
     ) {
     }
 
     /**
      * @param array{id: string, key: string, type: string, config: array<string, mixed>} $target
-     * @param array{deliveryId?: string}|null $deliveryContext
+     * @param null|array{deliveryId?: string}                                            $deliveryContext
      */
     public function publish(DomainEvent $event, array $target, ?array $deliveryContext = null): void
     {
@@ -27,22 +29,25 @@ class OutboxTargetPublisher
         $type = (string) $target['type'];
 
         $strategy = $this->strategyRegistry->getByType($type);
+
         if ($strategy === null) {
             throw new \RuntimeException(sprintf('No outbox destination strategy registered for type "%s".', $type));
         }
 
         $config = $target['config'] ?? [];
+
         if ($config !== (array) $config) {
             $config = [];
         }
         $deliveryId = '';
+
         if ($deliveryContext === (array) $deliveryContext && !empty($deliveryContext['deliveryId'])) {
             $deliveryId = (string) $deliveryContext['deliveryId'];
         }
 
         $context = [
-            'id' => (string) ($target['id'] ?? ''),
-            'key' => (string) ($target['key'] ?? ''),
+            'id'         => (string) ($target['id'] ?? ''),
+            'key'        => (string) ($target['key'] ?? ''),
             'deliveryId' => $deliveryId,
         ];
 

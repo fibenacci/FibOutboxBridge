@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Flow;
 
@@ -31,7 +33,7 @@ class OutboxDeliveryResultEvent extends Event implements FlowEventAware, ScalarV
         private readonly array $targetConfig,
         private readonly int $attempt,
         private readonly string $deliveryStatus,
-        private readonly ?string $errorMessage
+        private readonly ?string $errorMessage,
     ) {
     }
 
@@ -46,26 +48,26 @@ class OutboxDeliveryResultEvent extends Event implements FlowEventAware, ScalarV
     }
 
     /**
-     * @return array<string, scalar|array<mixed>|null>
+     * @return array<string, null|array<mixed>|scalar>
      */
     public function getValues(): array
     {
         return [
-            'eventId' => $this->domainEvent->getId(),
-            'eventName' => $this->domainEvent->getEventName(),
-            'aggregateType' => $this->domainEvent->getAggregateType(),
-            'aggregateId' => $this->domainEvent->getAggregateId(),
-            'occurredAt' => $this->domainEvent->getOccurredAt()->format(\DATE_ATOM),
-            'payloadJson' => json_encode($this->domainEvent->getPayload(), \JSON_THROW_ON_ERROR),
-            'metaJson' => json_encode($this->domainEvent->getMeta(), \JSON_THROW_ON_ERROR),
-            'deliveryId' => $this->deliveryId,
-            'destinationId' => $this->destinationId,
-            'destinationKey' => $this->destinationKey,
-            'destinationType' => $this->destinationType,
+            'eventId'          => $this->domainEvent->getId(),
+            'eventName'        => $this->domainEvent->getEventName(),
+            'aggregateType'    => $this->domainEvent->getAggregateType(),
+            'aggregateId'      => $this->domainEvent->getAggregateId(),
+            'occurredAt'       => $this->domainEvent->getOccurredAt()->format(\DATE_ATOM),
+            'payloadJson'      => json_encode($this->domainEvent->getPayload(), \JSON_THROW_ON_ERROR),
+            'metaJson'         => json_encode($this->domainEvent->getMeta(), \JSON_THROW_ON_ERROR),
+            'deliveryId'       => $this->deliveryId,
+            'destinationId'    => $this->destinationId,
+            'destinationKey'   => $this->destinationKey,
+            'destinationType'  => $this->destinationType,
             'targetConfigJson' => json_encode($this->targetConfig, \JSON_THROW_ON_ERROR),
-            'attempt' => $this->attempt,
-            'deliveryStatus' => $this->deliveryStatus,
-            'errorMessage' => $this->errorMessage,
+            'attempt'          => $this->attempt,
+            'deliveryStatus'   => $this->deliveryStatus,
+            'errorMessage'     => $this->errorMessage,
         ];
     }
 

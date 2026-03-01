@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Destination\Strategy;
 
@@ -11,7 +13,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class FlowOutboxDestinationStrategy implements OutboxDestinationStrategyInterface
 {
     public function __construct(
-        private readonly EventDispatcherInterface $eventDispatcher
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -29,11 +31,11 @@ class FlowOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
     {
         return [
             [
-                'name' => 'flowEventName',
-                'type' => 'text',
-                'label' => 'Flow event name',
-                'required' => false,
-                'default' => OutboxFlowForwardedEvent::DEFAULT_EVENT_NAME,
+                'name'        => 'flowEventName',
+                'type'        => 'text',
+                'label'       => 'Flow event name',
+                'required'    => false,
+                'default'     => OutboxFlowForwardedEvent::DEFAULT_EVENT_NAME,
                 'placeholder' => OutboxFlowForwardedEvent::DEFAULT_EVENT_NAME,
             ],
         ];
@@ -46,6 +48,7 @@ class FlowOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
     public function publish(DomainEvent $event, array $context, array $config): void
     {
         $flowEventName = (string) ($config['flowEventName'] ?? OutboxFlowForwardedEvent::DEFAULT_EVENT_NAME);
+
         if ($flowEventName === '') {
             $flowEventName = OutboxFlowForwardedEvent::DEFAULT_EVENT_NAME;
         }

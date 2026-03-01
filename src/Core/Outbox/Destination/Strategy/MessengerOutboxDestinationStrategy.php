@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Destination\Strategy;
 
@@ -12,7 +14,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 class MessengerOutboxDestinationStrategy implements OutboxDestinationStrategyInterface
 {
     public function __construct(
-        private readonly MessageBusInterface $messageBus
+        private readonly MessageBusInterface $messageBus,
     ) {
     }
 
@@ -30,10 +32,10 @@ class MessengerOutboxDestinationStrategy implements OutboxDestinationStrategyInt
     {
         return [
             [
-                'name' => 'routingKey',
-                'type' => 'text',
-                'label' => 'Routing key',
-                'required' => false,
+                'name'        => 'routingKey',
+                'type'        => 'text',
+                'label'       => 'Routing key',
+                'required'    => false,
                 'placeholder' => 'Leave empty to use event name',
             ],
         ];
@@ -59,7 +61,7 @@ class MessengerOutboxDestinationStrategy implements OutboxDestinationStrategyInt
             $event->getMeta()
         );
 
-        $envelope = new Envelope($message);
+        $envelope       = new Envelope($message);
         $amqpStampClass = 'Symfony\\Component\\Messenger\\Bridge\\Amqp\\Transport\\AmqpStamp';
 
         if (class_exists($amqpStampClass)) {

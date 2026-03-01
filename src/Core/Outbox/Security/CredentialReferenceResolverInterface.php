@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Security;
 
@@ -8,4 +10,3 @@ interface CredentialReferenceResolverInterface
 
     public function resolve(string $reference): string;
 }
-

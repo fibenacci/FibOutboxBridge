@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Subscriber;
 
@@ -12,7 +14,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class ProductStockOutboxSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly OutboxRepository $repository
+        private readonly OutboxRepository $repository,
     ) {
     }
 
@@ -39,19 +41,20 @@ class ProductStockOutboxSubscriber implements EventSubscriberInterface
             }
 
             $aggregateId = $this->normalizePrimaryKey($writeResult->getPrimaryKey());
+
             if (empty($aggregateId)) {
                 continue;
             }
 
             $payload = [
-                'operation' => $writeResult->getOperation(),
-                'stock' => $writeResult->getProperty('stock'),
+                'operation'      => $writeResult->getOperation(),
+                'stock'          => $writeResult->getProperty('stock'),
                 'availableStock' => $writeResult->getProperty('availableStock'),
-                'isCloseout' => $writeResult->getProperty('isCloseout'),
+                'isCloseout'     => $writeResult->getProperty('isCloseout'),
             ];
 
             $meta = [
-                'source' => 'shopware.product.written',
+                'source'           => 'shopware.product.written',
                 'contextVersionId' => $event->getContext()->getVersionId(),
             ];
 
@@ -84,6 +87,7 @@ class ProductStockOutboxSubscriber implements EventSubscriberInterface
         }
 
         $id = $primaryKey['id'];
+
         if (empty($id)) {
             return null;
         }

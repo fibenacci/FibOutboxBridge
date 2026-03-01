@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Fib\OutboxBridge\Core\Outbox\Destination\Strategy;
 
@@ -10,7 +12,7 @@ use GuzzleHttp\Exception\GuzzleException;
 class WebhookOutboxDestinationStrategy implements OutboxDestinationStrategyInterface
 {
     public function __construct(
-        private readonly ClientInterface $httpClient
+        private readonly ClientInterface $httpClient,
     ) {
     }
 
@@ -28,10 +30,10 @@ class WebhookOutboxDestinationStrategy implements OutboxDestinationStrategyInter
     {
         return [
             [
-                'name' => 'url',
-                'type' => 'url',
-                'label' => 'Webhook URL',
-                'required' => true,
+                'name'        => 'url',
+                'type'        => 'url',
+                'label'       => 'Webhook URL',
+                'required'    => true,
                 'placeholder' => 'https://example.com/webhooks/orders',
             ],
         ];
@@ -49,10 +51,10 @@ class WebhookOutboxDestinationStrategy implements OutboxDestinationStrategyInter
         $this->validateConfig($config);
 
         $headers = [
-            'Content-Type' => 'application/json',
-            'X-Event-Id' => $event->getId(),
-            'X-Event-Name' => $event->getEventName(),
-            'X-Outbox-Destination-Id' => $context['id'],
+            'Content-Type'             => 'application/json',
+            'X-Event-Id'               => $event->getId(),
+            'X-Event-Name'             => $event->getEventName(),
+            'X-Outbox-Destination-Id'  => $context['id'],
             'X-Outbox-Destination-Key' => $context['key'],
         ];
 
@@ -73,7 +75,7 @@ class WebhookOutboxDestinationStrategy implements OutboxDestinationStrategyInter
         try {
             $response = $this->httpClient->request('POST', $config['url'], [
                 'headers' => $headers,
-                'json' => $event->toArray(),
+                'json'    => $event->toArray(),
             ]);
         } catch (GuzzleException $e) {
             throw new \RuntimeException(sprintf('Webhook publish failed: %s', $e->getMessage()), 0, $e);
