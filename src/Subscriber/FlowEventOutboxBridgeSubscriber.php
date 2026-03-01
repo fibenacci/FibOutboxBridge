@@ -29,7 +29,7 @@ class FlowEventOutboxBridgeSubscriber implements EventSubscriberInterface
     public function onFlowLog(FlowLogEvent $event): void
     {
         $sourceEvent = $event->getEvent();
-        $sourceEventName = trim((string) $sourceEvent->getName());
+        $sourceEventName = $sourceEvent->getName();
 
         if ($sourceEventName === '') {
             return;
@@ -88,7 +88,7 @@ class FlowEventOutboxBridgeSubscriber implements EventSubscriberInterface
             }
 
             $id = $event->{$method}();
-            if (!is_string($id) || $id === '') {
+            if (empty($id)) {
                 continue;
             }
 

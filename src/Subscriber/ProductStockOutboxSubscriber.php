@@ -79,7 +79,7 @@ class ProductStockOutboxSubscriber implements EventSubscriberInterface
      */
     private function normalizePrimaryKey(array|string $primaryKey): ?string
     {
-        if (is_string($primaryKey)) {
+        if ($primaryKey !== (array) $primaryKey) {
             return $primaryKey;
         }
 

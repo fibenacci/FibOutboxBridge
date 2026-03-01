@@ -111,14 +111,21 @@ class OutboxDispatcher
      */
     private function buildTargetFromRow(array $row): array
     {
-        $config = json_decode((string) ($row['target_config'] ?? '{}'), true);
+        $config = [];
+        if (!empty($row['target_config'])) {
+            $decodedConfig = json_decode((string) $row['target_config'], true);
+            $config = $decodedConfig === (array) $decodedConfig ? $decodedConfig : [];
+        }
+
         $destinationId = (string) ($row['destination_id'] ?? '');
+        $targetKey = (string) ($row['target_key'] ?? '');
+        $targetType = (string) ($row['target_type'] ?? '');
 
         return [
-            'id' => $destinationId === '' ? (string) ($row['target_key'] ?? '') : $destinationId,
-            'key' => (string) ($row['target_key'] ?? ''),
-            'type' => (string) ($row['target_type'] ?? ''),
-            'config' => is_array($config) ? $config : [],
+            'id' => $destinationId === '' ? $targetKey : $destinationId,
+            'key' => $targetKey,
+            'type' => $targetType,
+            'config' => $config,
         ];
     }
 
@@ -139,7 +146,7 @@ class OutboxDispatcher
             (string) ($target['id'] ?? ''),
             (string) ($target['key'] ?? ''),
             (string) ($target['type'] ?? ''),
-            is_array($target['config'] ?? null) ? $target['config'] : [],
+            ($target['config'] ?? null) === (array) ($target['config'] ?? null) ? $target['config'] : [],
             $attempt,
             'dead',
             $errorMessage

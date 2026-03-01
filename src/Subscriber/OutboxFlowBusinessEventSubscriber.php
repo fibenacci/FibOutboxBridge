@@ -35,11 +35,10 @@ class OutboxFlowBusinessEventSubscriber implements EventSubscriberInterface
             }
         }
 
-        foreach ([OutboxDeliveryResultEvent::EVENT_NAME_FAILED] as $eventName) {
-            $definition = $this->businessEventCollector->define(OutboxDeliveryResultEvent::class, $eventName);
-            if ($definition !== null) {
-                $collection->set($eventName, $definition);
-            }
+        $eventName = OutboxDeliveryResultEvent::EVENT_NAME_FAILED;
+        $definition = $this->businessEventCollector->define(OutboxDeliveryResultEvent::class, $eventName);
+        if ($definition !== null) {
+            $collection->set($eventName, $definition);
         }
     }
 }

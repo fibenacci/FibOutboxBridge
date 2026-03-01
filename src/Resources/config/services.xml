@@ -5,6 +5,18 @@
 
     <services>
         <defaults autowire="true" autoconfigure="true" public="false"/>
+        <service id="GuzzleHttp\ClientInterface" class="GuzzleHttp\Client"/>
+        <service id="Fib\OutboxBridge\Core\Outbox\Security\OutboxCredentialResolverInterface" alias="Fib\OutboxBridge\Core\Outbox\Security\OutboxCredentialResolver"/>
+        <service id="Fib\OutboxBridge\Core\Outbox\Security\OutboxSecretConfigMasker"/>
+        <service id="Fib\OutboxBridge\Core\Outbox\Security\OutboxCredentialResolver">
+            <argument type="tagged_iterator" tag="fib_outbox.credential_reference_resolver"/>
+        </service>
+        <service id="Fib\OutboxBridge\Core\Outbox\Security\Resolver\EnvCredentialReferenceResolver">
+            <tag name="fib_outbox.credential_reference_resolver"/>
+        </service>
+        <service id="Fib\OutboxBridge\Core\Outbox\Security\Resolver\FileCredentialReferenceResolver">
+            <tag name="fib_outbox.credential_reference_resolver"/>
+        </service>
 
         <service id="Fib\OutboxBridge\Core\Content\OutboxEvent\OutboxEventDefinition">
             <tag name="shopware.entity.definition"/>
@@ -75,6 +87,9 @@
         <!-- Legacy auto-bridges disabled: Outbox enqueue should happen via explicit Flow actions. -->
 
         <service id="Fib\OutboxBridge\Subscriber\OutboxFlowBusinessEventSubscriber">
+            <tag name="kernel.event_subscriber"/>
+        </service>
+        <service id="Fib\OutboxBridge\Subscriber\OutboxDestinationSecuritySubscriber">
             <tag name="kernel.event_subscriber"/>
         </service>
 

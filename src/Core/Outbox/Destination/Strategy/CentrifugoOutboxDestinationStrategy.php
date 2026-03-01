@@ -4,12 +4,13 @@ namespace Fib\OutboxBridge\Core\Outbox\Destination\Strategy;
 
 use Fib\OutboxBridge\Core\Outbox\Destination\OutboxDestinationStrategyInterface;
 use Fib\OutboxBridge\Core\Outbox\Domain\DomainEvent;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 
 class CentrifugoOutboxDestinationStrategy implements OutboxDestinationStrategyInterface
 {
     public function __construct(
-        private readonly HttpClientInterface $httpClient
+        private readonly ClientInterface $httpClient
     ) {
     }
 
@@ -36,8 +37,15 @@ class CentrifugoOutboxDestinationStrategy implements OutboxDestinationStrategyIn
             [
                 'name' => 'apiKey',
                 'type' => 'text',
-                'label' => 'API key',
-                'required' => true,
+                'label' => 'API key (direct, avoid in production)',
+                'required' => false,
+            ],
+            [
+                'name' => 'apiKeyRef',
+                'type' => 'text',
+                'label' => 'API key reference (env:... or file:...)',
+                'required' => false,
+                'placeholder' => 'env:OUTBOX_CENTRIFUGO_API_KEY',
             ],
             [
                 'name' => 'channel',
@@ -51,19 +59,15 @@ class CentrifugoOutboxDestinationStrategy implements OutboxDestinationStrategyIn
 
     public function validateConfig(array $config): void
     {
-        $apiUrl = trim((string) ($config['apiUrl'] ?? ''));
-        $apiKey = trim((string) ($config['apiKey'] ?? ''));
-        $channel = trim((string) ($config['channel'] ?? ''));
-
-        if ($apiUrl === '') {
+        if (empty($config['apiUrl'])) {
             throw new \RuntimeException('Centrifugo destination requires "apiUrl" config.');
         }
 
-        if ($apiKey === '') {
-            throw new \RuntimeException('Centrifugo destination requires "apiKey" config.');
+        if (empty($config['apiKey'])) {
+            throw new \RuntimeException('Centrifugo destination requires "apiKey" or "apiKeyRef" config.');
         }
 
-        if ($channel === '') {
+        if (empty($config['channel'])) {
             throw new \RuntimeException('Centrifugo destination requires "channel" config.');
         }
     }
@@ -72,32 +76,35 @@ class CentrifugoOutboxDestinationStrategy implements OutboxDestinationStrategyIn
     {
         $this->validateConfig($config);
 
-        $response = $this->httpClient->request('POST', (string) $config['apiUrl'], [
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'Authorization' => sprintf('apikey %s', (string) $config['apiKey']),
-            ],
-            'json' => [
-                'method' => 'publish',
-                'params' => [
-                    'channel' => (string) $config['channel'],
-                    'data' => [
-                        'deliveryId' => $context['deliveryId'],
-                        'destinationId' => $context['id'],
-                        'destinationKey' => $context['key'],
-                        'event' => $event->toArray(),
+        try {
+            $response = $this->httpClient->request('POST', $config['apiUrl'], [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Authorization' => sprintf('apikey %s', $config['apiKey']),
+                ],
+                'json' => [
+                    'method' => 'publish',
+                    'params' => [
+                        'channel' => $config['channel'],
+                        'data' => [
+                            'deliveryId' => $context['deliveryId'],
+                            'destinationId' => $context['id'],
+                            'destinationKey' => $context['key'],
+                            'event' => $event->toArray(),
+                        ],
                     ],
                 ],
-            ],
-        ]);
-
-        $statusCode = $response->getStatusCode();
-        if ($statusCode < 200 || $statusCode >= 300) {
-            throw new \RuntimeException(sprintf('Centrifugo publish failed with HTTP %d.', $statusCode));
+            ]);
+        } catch (GuzzleException $e) {
+            throw new \RuntimeException(sprintf('Centrifugo publish failed: %s', $e->getMessage()), 0, $e);
         }
 
-        $payload = $response->toArray(false);
-        if (is_array($payload) && array_key_exists('error', $payload) && !empty($payload['error'])) {
+        if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
+            throw new \RuntimeException(sprintf('Centrifugo publish failed with HTTP %d.', $response->getStatusCode()));
+        }
+
+        $payload = json_decode((string) $response->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+        if ($payload === (array) $payload && !empty($payload['error'])) {
             $errorJson = json_encode($payload['error']);
             throw new \RuntimeException(sprintf('Centrifugo publish returned error: %s', $errorJson ?: 'unknown'));
         }

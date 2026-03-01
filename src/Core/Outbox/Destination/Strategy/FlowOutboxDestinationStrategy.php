@@ -45,7 +45,7 @@ class FlowOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
 
     public function publish(DomainEvent $event, array $context, array $config): void
     {
-        $flowEventName = trim((string) ($config['flowEventName'] ?? OutboxFlowForwardedEvent::DEFAULT_EVENT_NAME));
+        $flowEventName = (string) ($config['flowEventName'] ?? OutboxFlowForwardedEvent::DEFAULT_EVENT_NAME);
         if ($flowEventName === '') {
             $flowEventName = OutboxFlowForwardedEvent::DEFAULT_EVENT_NAME;
         }

@@ -43,7 +43,7 @@ class OutboxDispatchCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $limit = max(1, (int) $input->getOption('limit'));
-        $worker = trim((string) $input->getOption('worker'));
+        $worker = (string) $input->getOption('worker');
 
         $result = $this->dispatcher->dispatchBatch($limit, $worker ?: null);
 

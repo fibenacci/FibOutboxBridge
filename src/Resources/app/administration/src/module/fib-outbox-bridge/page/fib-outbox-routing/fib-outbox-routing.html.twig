@@ -64,6 +64,9 @@
                 v-model:value="targetDraft.isActive"
                 :label="$tc('fib-outbox-bridge.routing.targets.fields.isActive')"
             />
+            <sw-alert variant="info" appearance="default" :title="$tc('fib-outbox-bridge.routing.targets.security.title')">
+                {{ $tc('fib-outbox-bridge.routing.targets.security.hint') }}
+            </sw-alert>
 
             <template v-for="field in configFieldDefinitions" :key="field.name">
                 <sw-switch-field
@@ -76,12 +79,14 @@
                     v-model:value="targetDraft.config[field.name]"
                     :label="field.label"
                     :placeholder="field.placeholder"
+                    :help-text="getConfigFieldHelpText(field)"
                 />
                 <sw-text-field
                     v-else
                     v-model:value="targetDraft.config[field.name]"
                     :label="field.label"
                     :placeholder="field.placeholder"
+                    :help-text="getConfigFieldHelpText(field)"
                 />
             </template>
 

@@ -33,7 +33,11 @@ class OutboxRouteResolver
         $matched = [];
 
         foreach ($routes as $route) {
-            if (!$this->matchesPattern((string) ($route['eventPattern'] ?? ''), $eventName)) {
+            if (empty($route['eventPattern'])) {
+                continue;
+            }
+
+            if (!$this->matchesPattern((string) $route['eventPattern'], $eventName)) {
                 continue;
             }
 
@@ -85,14 +89,10 @@ class OutboxRouteResolver
         }
 
         foreach ($rows as $row) {
-            $config = json_decode((string) ($row['config'] ?? '{}'), true);
-            if (!is_array($config)) {
-                continue;
-            }
-
-            $flowEventName = trim((string) ($config['flowEventName'] ?? OutboxFlowForwardedEvent::DEFAULT_EVENT_NAME));
-            if ($flowEventName === '') {
-                continue;
+            $config = $this->decodeJsonConfig($row, 'config');
+            $flowEventName = OutboxFlowForwardedEvent::DEFAULT_EVENT_NAME;
+            if (!empty($config['flowEventName'])) {
+                $flowEventName = (string) $config['flowEventName'];
             }
 
             $names[] = $flowEventName;
@@ -123,21 +123,21 @@ class OutboxRouteResolver
         $targets = [];
 
         foreach ($rows as $row) {
-            $id = trim((string) ($row['id'] ?? ''));
-            $technicalName = trim((string) ($row['technical_name'] ?? ''));
-            $type = strtolower(trim((string) ($row['type'] ?? '')));
+            $id = (string) ($row['id'] ?? '');
+            $technicalName = (string) ($row['technical_name'] ?? '');
+            $type = (string) ($row['type'] ?? '');
 
             if ($id === '' || $technicalName === '' || $type === '') {
                 continue;
             }
 
-            $config = json_decode((string) ($row['config'] ?? '{}'), true);
+            $config = $this->decodeJsonConfig($row, 'config');
 
             $targets[$technicalName] = [
                 'id' => $id,
                 'key' => $technicalName,
                 'type' => $type,
-                'config' => is_array($config) ? $config : [],
+                'config' => $config,
             ];
         }
 
@@ -158,23 +158,19 @@ class OutboxRouteResolver
         $routes = [];
 
         foreach ($rows as $row) {
-            $eventPattern = trim((string) ($row['event_pattern'] ?? ''));
+            $eventPattern = (string) ($row['event_pattern'] ?? '');
             if ($eventPattern === '') {
                 continue;
             }
 
-            $targetKeysRaw = json_decode((string) ($row['target_keys'] ?? '[]'), true);
-            if (!is_array($targetKeysRaw)) {
-                continue;
-            }
-
+            $targetKeysRaw = $this->decodeJsonArray($row, 'target_keys');
             $targetKeys = [];
             foreach ($targetKeysRaw as $targetKey) {
-                if (!is_string($targetKey) || $targetKey === '') {
+                if (empty($targetKey)) {
                     continue;
                 }
 
-                $targetKeys[] = $targetKey;
+                $targetKeys[] = (string) $targetKey;
             }
 
             if ($targetKeys === []) {
@@ -191,10 +187,40 @@ class OutboxRouteResolver
         return $routes;
     }
 
+    /**
+     * @param array<string, mixed> $row
+     *
+     * @return array<string, mixed>
+     */
+    private function decodeJsonConfig(array $row, string $key): array
+    {
+        if (empty($row[$key])) {
+            return [];
+        }
+
+        $decoded = json_decode((string) $row[$key], true);
+
+        return $decoded === (array) $decoded ? $decoded : [];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     *
+     * @return list<mixed>
+     */
+    private function decodeJsonArray(array $row, string $key): array
+    {
+        if (empty($row[$key])) {
+            return [];
+        }
+
+        $decoded = json_decode((string) $row[$key], true);
+
+        return $decoded === (array) $decoded ? $decoded : [];
+    }
+
     private function matchesPattern(string $pattern, string $eventName): bool
     {
-        $pattern = trim($pattern);
-
         if ($pattern === '' || $pattern === '*') {
             return true;
         }

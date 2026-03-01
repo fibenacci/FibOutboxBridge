@@ -4,12 +4,13 @@ namespace Fib\OutboxBridge\Core\Outbox\Destination\Strategy;
 
 use Fib\OutboxBridge\Core\Outbox\Destination\OutboxDestinationStrategyInterface;
 use Fib\OutboxBridge\Core\Outbox\Domain\DomainEvent;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 
 class WebhookOutboxDestinationStrategy implements OutboxDestinationStrategyInterface
 {
     public function __construct(
-        private readonly HttpClientInterface $httpClient
+        private readonly ClientInterface $httpClient
     ) {
     }
 
@@ -38,8 +39,7 @@ class WebhookOutboxDestinationStrategy implements OutboxDestinationStrategyInter
 
     public function validateConfig(array $config): void
     {
-        $url = trim((string) ($config['url'] ?? ''));
-        if ($url === '') {
+        if (empty($config['url'])) {
             throw new \RuntimeException('Webhook destination requires "url" config.');
         }
     }
@@ -60,24 +60,27 @@ class WebhookOutboxDestinationStrategy implements OutboxDestinationStrategyInter
             $headers['X-Outbox-Delivery-Id'] = $context['deliveryId'];
         }
 
-        if (is_array($config['headers'] ?? null)) {
+        if (($config['headers'] ?? null) === (array) ($config['headers'] ?? null)) {
             foreach ($config['headers'] as $headerName => $headerValue) {
-                if (!is_string($headerName) || !is_scalar($headerValue)) {
+                if ($headerValue === (array) $headerValue) {
                     continue;
                 }
 
-                $headers[$headerName] = (string) $headerValue;
+                $headers[(string) $headerName] = (string) $headerValue;
             }
         }
 
-        $response = $this->httpClient->request('POST', (string) $config['url'], [
-            'headers' => $headers,
-            'json' => $event->toArray(),
-        ]);
+        try {
+            $response = $this->httpClient->request('POST', $config['url'], [
+                'headers' => $headers,
+                'json' => $event->toArray(),
+            ]);
+        } catch (GuzzleException $e) {
+            throw new \RuntimeException(sprintf('Webhook publish failed: %s', $e->getMessage()), 0, $e);
+        }
 
-        $statusCode = $response->getStatusCode();
-        if ($statusCode < 200 || $statusCode >= 300) {
-            throw new \RuntimeException(sprintf('Webhook publish failed with HTTP %d.', $statusCode));
+        if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
+            throw new \RuntimeException(sprintf('Webhook publish failed with HTTP %d.', $response->getStatusCode()));
         }
     }
 }

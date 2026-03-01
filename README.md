@@ -83,8 +83,30 @@ Dadurch erscheinen Typ und Konfig-Felder automatisch in der Admin-Destination-Ve
 
 ## Hinweise zu `sftp` und `centrifugo`
 
-- `sftp` benötigt die PHP-Erweiterung `ssh2` im Runtime-Container.
-- `centrifugo` nutzt die HTTP-API (`apiUrl`, `apiKey`, `channel`).
+- `sftp` läuft über Flysystem (`league/flysystem-sftp-v3`), kein direktes `ssh2_*` mehr im Plugin-Code.
+- `centrifugo` nutzt die HTTP-API (`apiUrl`, `apiKey`, `channel`) über Guzzle.
+
+## Credential Security (neu)
+
+Secrets sollten nicht als Klartext in Destination-Config gespeichert werden.
+
+Das Plugin löst deshalb Credential-Referenzen zur Laufzeit auf:
+
+- `env:MY_SECRET_ENV`
+- `file:/run/secrets/my_secret`
+
+Mechanik:
+
+1. Destination-Config kann `*Ref`-Felder enthalten (z. B. `apiKeyRef`, `passwordRef`, `privateKeyRef`)
+2. `OutboxCredentialResolver` ersetzt diese Werte beim Dispatch durch die echten Secrets
+3. Strategy erhält nur den aufgelösten Wert (`apiKey`, `password`, `privateKey`)
+4. Admin/API-Reads maskieren Secret-Felder als `********`
+5. Beim Speichern werden Mask-Placeholder serverseitig auf bestehende Secret-Werte zurückgeführt (kein Überschreiben mit `********`)
+
+Empfehlung Produktion:
+
+- Secrets via Docker/K8s-Secret + `env:`/`file:` Referenz bereitstellen
+- direkte Secret-Felder nur für lokale Entwicklung verwenden
 
 ## Integritätsschicht im Flow Builder
 

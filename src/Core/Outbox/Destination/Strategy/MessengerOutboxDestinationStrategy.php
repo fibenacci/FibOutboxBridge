@@ -45,7 +45,7 @@ class MessengerOutboxDestinationStrategy implements OutboxDestinationStrategyInt
 
     public function publish(DomainEvent $event, array $context, array $config): void
     {
-        $routingKey = is_string($config['routingKey'] ?? null) && $config['routingKey'] !== ''
+        $routingKey = !empty($config['routingKey'])
             ? (string) $config['routingKey']
             : $event->getEventName();
 

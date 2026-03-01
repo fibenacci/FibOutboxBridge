@@ -49,8 +49,8 @@ class FlowOutboxEnqueueService
             sprintf('fib.outbox.enqueue.%s.v1', $destinationType),
             $aggregateType,
             $aggregateId,
-            is_array($payload) ? $payload : [],
-            is_array($meta) ? $meta : []
+            $payload,
+            $meta
         );
 
         $this->outboxRepository->appendWithDestinations($event, $destinations);
@@ -61,13 +61,13 @@ class FlowOutboxEnqueueService
     public function enqueueForConfiguredDestination(StorableFlow $flow, string $actionName): bool
     {
         $config = $flow->getConfig();
-        $destinationId = trim((string) ($config['destinationId'] ?? ''));
-        $destinationType = strtolower(trim((string) ($config['destinationType'] ?? '')));
-        $sourceEventName = trim($flow->getName());
-
-        if ($destinationId === '') {
+        if (empty($config['destinationId'])) {
             return false;
         }
+
+        $destinationId = (string) $config['destinationId'];
+        $destinationType = (string) ($config['destinationType'] ?? '');
+        $sourceEventName = $flow->getName();
 
         $destination = $this->destinationSelector->getActiveDestinationById(
             $destinationId,
@@ -106,8 +106,8 @@ class FlowOutboxEnqueueService
             $sourceEventName !== '' ? $sourceEventName : 'fib.outbox.enqueue.destination.v1',
             $aggregateType,
             $aggregateId,
-            is_array($payload) ? $payload : [],
-            is_array($meta) ? $meta : []
+            $payload,
+            $meta
         );
 
         $this->outboxRepository->appendWithDestinations($event, [$destination]);
@@ -131,11 +131,11 @@ class FlowOutboxEnqueueService
         foreach ($mapping as $key => $type) {
             $value = $flow->getStore($key);
 
-            if (!is_string($value) || $value === '') {
+            if (empty($value)) {
                 continue;
             }
 
-            return [$type, $value];
+            return [$type, (string) $value];
         }
 
         $sequenceId = $this->resolveSequenceId($flow);
@@ -157,7 +157,7 @@ class FlowOutboxEnqueueService
 
     private function normalizeValue(mixed $value): mixed
     {
-        if ($value === null || is_scalar($value)) {
+        if ($value === null || $value === true || $value === false) {
             return $value;
         }
 
@@ -165,36 +165,13 @@ class FlowOutboxEnqueueService
             return $value->format(\DATE_ATOM);
         }
 
-        if (is_array($value)) {
+        if ($value === (array) $value) {
             $normalized = [];
             foreach ($value as $key => $item) {
                 $normalized[(string) $key] = $this->normalizeValue($item);
             }
 
             return $normalized;
-        }
-
-        if (is_object($value)) {
-            $result = [
-                '_class' => $value::class,
-            ];
-
-            if (method_exists($value, 'getId')) {
-                $id = $value->getId();
-                if (is_string($id) && $id !== '') {
-                    $result['id'] = $id;
-                }
-            }
-
-            if (method_exists($value, 'jsonSerialize')) {
-                try {
-                    $serialized = $value->jsonSerialize();
-                    $result['serialized'] = $this->normalizeValue($serialized);
-                } catch (\Throwable) {
-                }
-            }
-
-            return $result;
         }
 
         return (string) $value;

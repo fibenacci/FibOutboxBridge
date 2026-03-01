@@ -15,8 +15,8 @@ class OutboxDestinationStrategyRegistry
     public function __construct(iterable $strategies)
     {
         foreach ($strategies as $strategy) {
-            $type = strtolower(trim($strategy->getType()));
-            if ($type === '') {
+            $type = $strategy->getType();
+            if (empty($type)) {
                 continue;
             }
 
@@ -26,16 +26,26 @@ class OutboxDestinationStrategyRegistry
 
     public function getByType(string $type): ?OutboxDestinationStrategyInterface
     {
-        $normalizedType = strtolower(trim($type));
-        if ($normalizedType === '') {
+        if (empty($type)) {
             return null;
         }
 
-        return $this->strategiesByType[$normalizedType] ?? null;
+        return $this->strategiesByType[$type] ?? null;
     }
 
     /**
-     * @return list<array{type: string, label: string, configFields: list<array{name: string, type: string, label: string, required?: bool, placeholder?: string, default?: scalar|null}>}>
+     * @return list<array{
+     *     type: string,
+     *     label: string,
+     *     configFields: list<array{
+     *      name: string,
+     *      type: string,
+     *      label: string,
+     *      required?: bool,
+     *      placeholder?: string,
+     *      default?: scalar|null
+     *     }>
+     *    }>
      */
     public function getTypeDefinitions(): array
     {

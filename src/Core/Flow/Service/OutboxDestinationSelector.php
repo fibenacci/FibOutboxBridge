@@ -16,7 +16,7 @@ class OutboxDestinationSelector
      */
     public function getActiveDestinationsByType(string $type): array
     {
-        $normalizedType = strtolower(trim($type));
+        $normalizedType = $type;
         if ($normalizedType === '') {
             return [];
         }
@@ -46,10 +46,10 @@ class OutboxDestinationSelector
         $destinations = [];
 
         foreach ($rows as $row) {
-            $id = trim((string) ($row['id'] ?? ''));
-            $key = trim((string) ($row['technical_name'] ?? ''));
-            $destinationType = strtolower(trim((string) ($row['type'] ?? '')));
-            $config = json_decode((string) ($row['config'] ?? '{}'), true);
+            $id = (string) ($row['id'] ?? '');
+            $key = (string) ($row['technical_name'] ?? '');
+            $destinationType = (string) ($row['type'] ?? '');
+            $config = $this->decodeJsonConfig($row, 'config');
 
             if ($id === '' || $key === '' || $destinationType === '') {
                 continue;
@@ -59,7 +59,7 @@ class OutboxDestinationSelector
                 'id' => $id,
                 'key' => $key,
                 'type' => $destinationType,
-                'config' => is_array($config) ? $config : [],
+                'config' => $config,
             ];
         }
 
@@ -71,12 +71,12 @@ class OutboxDestinationSelector
      */
     public function getActiveDestinationById(string $destinationId, ?string $expectedType = null): ?array
     {
-        $normalizedId = strtolower(trim($destinationId));
+        $normalizedId = $destinationId;
         if ($normalizedId === '') {
             return null;
         }
 
-        $normalizedType = strtolower(trim((string) $expectedType));
+        $normalizedType = (string) $expectedType;
 
         try {
             $row = $this->connection->fetchAssociative(<<<SQL
@@ -100,14 +100,14 @@ class OutboxDestinationSelector
             ]);
         }
 
-        if (!is_array($row)) {
+        if (empty($row) || $row !== (array) $row) {
             return null;
         }
 
-        $id = trim((string) ($row['id'] ?? ''));
-        $key = trim((string) ($row['technical_name'] ?? ''));
-        $type = strtolower(trim((string) ($row['type'] ?? '')));
-        $config = json_decode((string) ($row['config'] ?? '{}'), true);
+        $id = (string) ($row['id'] ?? '');
+        $key = (string) ($row['technical_name'] ?? '');
+        $type = (string) ($row['type'] ?? '');
+        $config = $this->decodeJsonConfig($row, 'config');
 
         if ($id === '' || $key === '' || $type === '') {
             return null;
@@ -121,7 +121,23 @@ class OutboxDestinationSelector
             'id' => $id,
             'key' => $key,
             'type' => $type,
-            'config' => is_array($config) ? $config : [],
+            'config' => $config,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     *
+     * @return array<string, mixed>
+     */
+    private function decodeJsonConfig(array $row, string $key): array
+    {
+        if (empty($row[$key])) {
+            return [];
+        }
+
+        $decoded = json_decode((string) $row[$key], true);
+
+        return $decoded === (array) $decoded ? $decoded : [];
     }
 }

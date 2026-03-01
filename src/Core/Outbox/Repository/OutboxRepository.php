@@ -211,7 +211,8 @@ class OutboxRepository
         ]);
 
         foreach ($eventIds as $eventId) {
-            if (!is_string($eventId) || $eventId === '') {
+            $eventId = (string) $eventId;
+            if ($eventId === '') {
                 continue;
             }
 
@@ -315,7 +316,11 @@ class OutboxRepository
         ];
 
         foreach ($rows as $row) {
-            $status = (string) ($row['status'] ?? '');
+            if (empty($row['status'])) {
+                continue;
+            }
+
+            $status = (string) $row['status'];
             if (!array_key_exists($status, $counts)) {
                 continue;
             }
@@ -389,7 +394,10 @@ class OutboxRepository
             $destinationId = (string) ($target['id'] ?? '');
             $targetKey = (string) ($target['key'] ?? '');
             $targetType = (string) ($target['type'] ?? '');
-            $targetConfig = is_array($target['config'] ?? null) ? $target['config'] : [];
+            $targetConfig = $target['config'] ?? [];
+            if ($targetConfig !== (array) $targetConfig) {
+                $targetConfig = [];
+            }
 
             if ($destinationId === '' || $targetKey === '' || $targetType === '') {
                 continue;
@@ -486,7 +494,11 @@ class OutboxRepository
         $total = 0;
 
         foreach ($rows as $row) {
-            $status = (string) ($row['status'] ?? '');
+            if (empty($row['status'])) {
+                continue;
+            }
+
+            $status = (string) $row['status'];
             $count = (int) ($row['cnt'] ?? 0);
             $total += $count;
 
@@ -521,7 +533,7 @@ class OutboxRepository
             'status' => $eventStatus,
             'attempts' => $maxAttempts,
             'published_at' => $publishedAt,
-            'last_error' => is_string($latestError) && $latestError !== '' ? mb_substr($latestError, 0, 65000) : null,
+            'last_error' => empty($latestError) ? null : mb_substr((string) $latestError, 0, 65000),
             'updated_at' => (new \DateTimeImmutable())->format(Defaults::STORAGE_DATE_TIME_FORMAT),
         ], [
             'id' => $eventId,
@@ -558,7 +570,8 @@ class OutboxRepository
         $claimedIds = [];
 
         foreach ($candidateIds as $candidateId) {
-            if (!is_string($candidateId) || $candidateId === '') {
+            $candidateId = (string) $candidateId;
+            if ($candidateId === '') {
                 continue;
             }
 

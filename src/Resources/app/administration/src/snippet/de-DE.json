@@ -87,11 +87,16 @@
           "technicalNameHelp": "Stabiler Schlüssel für Routes, z. B. erp_webhook",
           "type": "Target Typ",
           "isActive": "Aktiv",
+          "secretFieldHelp": "Für produktive Secrets bitte env:/file:-Referenzen nutzen. Maskierte Werte bleiben beim Speichern unverändert.",
           "webhookUrl": "Webhook URL",
           "routingKey": "Routing Key",
           "routingKeyPlaceholder": "Leer = Eventname verwenden",
           "flowEventName": "Flow Eventname",
           "flowEventNamePlaceholder": "fib.outbox.forwarded"
+        },
+        "security": {
+          "title": "Credential-Verarbeitung",
+          "hint": "Produktive Zugangsdaten nicht als Klartext speichern. Nutze Referenzen wie env:OUTBOX_API_KEY oder file:/run/secrets/outbox_api_key."
         },
         "modal": {
           "createTitle": "Target erstellen",

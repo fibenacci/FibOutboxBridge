@@ -4,6 +4,10 @@ namespace Fib\OutboxBridge\Core\Outbox\Destination\Strategy;
 
 use Fib\OutboxBridge\Core\Outbox\Destination\OutboxDestinationStrategyInterface;
 use Fib\OutboxBridge\Core\Outbox\Domain\DomainEvent;
+use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\PhpseclibV3\SftpAdapter;
+use League\Flysystem\PhpseclibV3\SftpConnectionProvider;
 
 class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterface
 {
@@ -42,8 +46,35 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
             [
                 'name' => 'password',
                 'type' => 'text',
-                'label' => 'Password',
-                'required' => true,
+                'label' => 'Password (direct, avoid in production)',
+                'required' => false,
+            ],
+            [
+                'name' => 'passwordRef',
+                'type' => 'text',
+                'label' => 'Password reference (env:... or file:...)',
+                'required' => false,
+                'placeholder' => 'env:OUTBOX_SFTP_PASSWORD',
+            ],
+            [
+                'name' => 'privateKey',
+                'type' => 'text',
+                'label' => 'Private key path (direct, avoid in production)',
+                'required' => false,
+                'placeholder' => '/run/secrets/sftp_id_rsa',
+            ],
+            [
+                'name' => 'privateKeyRef',
+                'type' => 'text',
+                'label' => 'Private key reference (env:... or file:...)',
+                'required' => false,
+                'placeholder' => 'file:/run/secrets/sftp_id_rsa',
+            ],
+            [
+                'name' => 'passphrase',
+                'type' => 'text',
+                'label' => 'Private key passphrase (optional)',
+                'required' => false,
             ],
             [
                 'name' => 'remoteDir',
@@ -65,12 +96,19 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
 
     public function validateConfig(array $config): void
     {
-        $required = ['host', 'username', 'password', 'remoteDir'];
+        $required = ['host', 'username', 'remoteDir'];
 
         foreach ($required as $key) {
-            if (trim((string) ($config[$key] ?? '')) === '') {
+            if (empty($config[$key])) {
                 throw new \RuntimeException(sprintf('SFTP destination requires "%s" config.', $key));
             }
+        }
+
+        $password = $config['password'] ?? '';
+        $privateKey = $config['privateKey'] ?? '';
+
+        if (empty($password) && empty($privateKey)) {
+            throw new \RuntimeException('SFTP destination requires either "password/passwordRef" or "privateKey/privateKeyRef" config.');
         }
     }
 
@@ -78,38 +116,15 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
     {
         $this->validateConfig($config);
 
-        if (!function_exists('ssh2_connect')) {
-            throw new \RuntimeException('SFTP destination requires PHP extension "ssh2".');
-        }
-
         $host = (string) $config['host'];
         $port = (int) ($config['port'] ?? 22);
         $username = (string) $config['username'];
-        $password = (string) $config['password'];
-        $remoteDir = rtrim((string) $config['remoteDir'], '/');
-        $fileNamePattern = trim((string) ($config['fileNamePattern'] ?? '{eventId}.json'));
+        $password = (string) ($config['password'] ?? '');
+        $privateKey = (string) ($config['privateKey'] ?? '');
+        $passphrase = (string) ($config['passphrase'] ?? '');
+        $remoteDir = (string) $config['remoteDir'];
+        $fileNamePattern = (string) ($config['fileNamePattern'] ?? '{eventId}.json');
         $fileName = $this->resolveFileName($fileNamePattern, $event);
-        $remotePath = sprintf('%s/%s', $remoteDir, ltrim($fileName, '/'));
-
-        $connection = ssh2_connect($host, $port);
-        if ($connection === false) {
-            throw new \RuntimeException(sprintf('Could not connect to SFTP host "%s:%d".', $host, $port));
-        }
-
-        $authOk = ssh2_auth_password($connection, $username, $password);
-        if ($authOk !== true) {
-            throw new \RuntimeException(sprintf('SFTP auth failed for user "%s".', $username));
-        }
-
-        $sftp = ssh2_sftp($connection);
-        if ($sftp === false) {
-            throw new \RuntimeException('Could not initialize SFTP subsystem.');
-        }
-
-        $stream = @fopen(sprintf('ssh2.sftp://%d%s', (int) $sftp, $remotePath), 'wb');
-        if (!is_resource($stream)) {
-            throw new \RuntimeException(sprintf('Could not open remote SFTP file "%s".', $remotePath));
-        }
 
         $payload = json_encode([
             'deliveryId' => $context['deliveryId'],
@@ -118,11 +133,22 @@ class SftpOutboxDestinationStrategy implements OutboxDestinationStrategyInterfac
             'event' => $event->toArray(),
         ], \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR);
 
-        $bytes = fwrite($stream, $payload);
-        fclose($stream);
+        $connectionProvider = new SftpConnectionProvider(
+            $host,
+            $username,
+            $password !== '' ? $password : null,
+            $privateKey !== '' ? $privateKey : null,
+            $passphrase !== '' ? $passphrase : null,
+            $port
+        );
 
-        if ($bytes === false || $bytes <= 0) {
-            throw new \RuntimeException(sprintf('Could not write payload to remote SFTP file "%s".', $remotePath));
+        $adapter = new SftpAdapter($connectionProvider, $remoteDir);
+        $filesystem = new Filesystem($adapter);
+
+        try {
+            $filesystem->write(ltrim($fileName, '/'), $payload);
+        } catch (FilesystemException $e) {
+            throw new \RuntimeException(sprintf('Could not write payload to remote SFTP file "%s".', $fileName), 0, $e);
         }
     }
 

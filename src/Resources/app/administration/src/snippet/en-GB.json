@@ -87,11 +87,16 @@
           "technicalNameHelp": "Stable key used by routes, e.g. erp_webhook",
           "type": "Target type",
           "isActive": "Active",
+          "secretFieldHelp": "Use env:/file: references for production secrets. Masked values stay unchanged on save.",
           "webhookUrl": "Webhook URL",
           "routingKey": "Routing key",
           "routingKeyPlaceholder": "Uses event name when empty",
           "flowEventName": "Flow event name",
           "flowEventNamePlaceholder": "fib.outbox.forwarded"
+        },
+        "security": {
+          "title": "Credential handling",
+          "hint": "Do not store production credentials as plain text. Prefer references like env:OUTBOX_API_KEY or file:/run/secrets/outbox_api_key."
         },
         "modal": {
           "createTitle": "Create target",

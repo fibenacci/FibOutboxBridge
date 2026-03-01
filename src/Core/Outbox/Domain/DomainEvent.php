@@ -61,8 +61,8 @@ class DomainEvent
             (string) $row['aggregate_type'],
             (string) $row['aggregate_id'],
             $occurredAt,
-            is_array($payload) ? $payload : [],
-            is_array($meta) ? $meta : null
+            $payload === (array) $payload ? $payload : [],
+            $meta === (array) $meta ? $meta : null
         );
     }
 

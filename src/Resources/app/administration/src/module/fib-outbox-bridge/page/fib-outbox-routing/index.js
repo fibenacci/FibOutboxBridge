@@ -252,5 +252,32 @@ Component.register('fib-outbox-routing', {
 
             return '';
         },
+
+        isSensitiveConfigField(fieldName) {
+            if (!fieldName) {
+                return false;
+            }
+
+            const normalized = String(fieldName).toLowerCase();
+
+            return normalized.includes('password')
+                || normalized.includes('passphrase')
+                || normalized.includes('secret')
+                || normalized.includes('token')
+                || normalized.includes('apikey')
+                || normalized.includes('api_key')
+                || normalized.includes('privatekey')
+                || normalized.includes('private_key')
+                || normalized.includes('accesskey')
+                || normalized.includes('access_key');
+        },
+
+        getConfigFieldHelpText(field) {
+            if (!this.isSensitiveConfigField(field?.name)) {
+                return field?.helpText ?? '';
+            }
+
+            return this.$tc('fib-outbox-bridge.routing.targets.fields.secretFieldHelp');
+        },
     },
 });
