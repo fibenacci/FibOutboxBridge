@@ -1,3 +1,5 @@
+Achtung!!! KI Protoype. Work in Progress! xD
+
 # FibOutboxBridge
 
 Transaktionale Outbox für Shopware 6 mit Flow-Builder-Action als Enqueue-Schicht und generischer, erweiterbarer Destination-Pipeline.
