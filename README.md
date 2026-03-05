@@ -1,4 +1,5 @@
-Achtung!!! KI Protoype. Work in Progress! xD
+Achtung!!! AI Oneshot Prototype. Work in Progress
+
 
 # FibOutboxBridge
 
